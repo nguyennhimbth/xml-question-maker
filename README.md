@@ -84,3 +84,8 @@ Go to https://question-forge-studio.lovable.app/
 ## License
 
 MIT
+
+## Credits
+
+Made by https://lovable.dev/
+Idea by @nguyennhimbth
