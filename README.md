@@ -70,7 +70,11 @@ The exported XML follows this structure:
 </questions>
 ```
 
-## Getting Started
+## Getting Started (Use Instantly) (Can't save your question for a long time)
+
+Go to https://question-forge-studio.lovable.app/
+
+## Getting Started (For local use)
 
 1. Clone this repository
 2. Install dependencies with `npm install`
