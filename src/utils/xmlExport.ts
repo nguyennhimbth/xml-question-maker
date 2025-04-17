@@ -5,7 +5,7 @@ export const generateXML = (
   fastestFingerQuestion: FastestFingerQuestion | null,
   regularQuestions: RegularQuestion[]
 ): string => {
-  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<questions>\n';
+  let xml = '<questions>\n';
 
   // Add the fastest finger first question if selected
   if (fastestFingerQuestion) {
