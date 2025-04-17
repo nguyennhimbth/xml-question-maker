@@ -14,24 +14,27 @@ const parseXML = (xmlString: string): {
   let fastestFingerQuestion: FastestFingerQuestion | null = null;
   
   if (fastestNode) {
-    fastestFingerQuestion = {
-      id: uuidv4(),
-      text: fastestNode.querySelector('text')?.textContent || '',
-      answers: {
-        a: fastestNode.querySelector('a')?.textContent || '',
-        b: fastestNode.querySelector('b')?.textContent || '',
-        c: fastestNode.querySelector('c')?.textContent || '',
-        d: fastestNode.querySelector('d')?.textContent || '',
-      },
-      correctOrder: {
-        one: (fastestNode.querySelector('correctOrder one')?.textContent || 'a') as 'a' | 'b' | 'c' | 'd',
-        two: (fastestNode.querySelector('correctOrder two')?.textContent || 'b') as 'a' | 'b' | 'c' | 'd',
-        three: (fastestNode.querySelector('correctOrder three')?.textContent || 'c') as 'a' | 'b' | 'c' | 'd',
-        four: (fastestNode.querySelector('correctOrder four')?.textContent || 'd') as 'a' | 'b' | 'c' | 'd',
-      },
-      selected: false,
-      difficulty: Number(fastestNode.getAttribute('difficulty')) || 0,
-    };
+    const text = fastestNode.querySelector('text')?.textContent || '';
+    const a = fastestNode.querySelector('a')?.textContent || '';
+    const b = fastestNode.querySelector('b')?.textContent || '';
+    const c = fastestNode.querySelector('c')?.textContent || '';
+    const d = fastestNode.querySelector('d')?.textContent || '';
+    const one = fastestNode.querySelector('correctOrder one')?.textContent as 'a' | 'b' | 'c' | 'd' || 'a';
+    const two = fastestNode.querySelector('correctOrder two')?.textContent as 'a' | 'b' | 'c' | 'd' || 'b';
+    const three = fastestNode.querySelector('correctOrder three')?.textContent as 'a' | 'b' | 'c' | 'd' || 'c';
+    const four = fastestNode.querySelector('correctOrder four')?.textContent as 'a' | 'b' | 'c' | 'd' || 'd';
+    const difficulty = Number(fastestNode.getAttribute('difficulty')) || 0;
+
+    if (text && a && b && c && d) {
+      fastestFingerQuestion = {
+        id: uuidv4(),
+        text,
+        answers: { a, b, c, d },
+        correctOrder: { one, two, three, four },
+        selected: false,
+        difficulty
+      };
+    }
   }
 
   // Parse Regular Questions
@@ -39,27 +42,35 @@ const parseXML = (xmlString: string): {
   const questionNodes = xmlDoc.querySelectorAll('question');
   
   questionNodes.forEach((node) => {
-    if (node.querySelector('text')?.textContent?.trim()) {
+    const text = node.querySelector('text')?.textContent?.trim();
+    const category = node.querySelector('category')?.textContent?.trim() || '';
+    
+    if (text) {
+      const a = node.querySelector('a');
+      const b = node.querySelector('b');
+      const c = node.querySelector('c');
+      const d = node.querySelector('d');
+
       regularQuestions.push({
         id: uuidv4(),
-        category: node.querySelector('category')?.textContent || '',
-        text: node.querySelector('text')?.textContent || '',
+        category,
+        text,
         answers: {
           a: { 
-            text: node.querySelector('a')?.textContent || '', 
-            correct: node.querySelector('a')?.getAttribute('correct') === 'yes' 
+            text: a?.textContent || '', 
+            correct: a?.getAttribute('correct') === 'yes' 
           },
           b: { 
-            text: node.querySelector('b')?.textContent || '', 
-            correct: node.querySelector('b')?.getAttribute('correct') === 'yes' 
+            text: b?.textContent || '', 
+            correct: b?.getAttribute('correct') === 'yes' 
           },
           c: { 
-            text: node.querySelector('c')?.textContent || '', 
-            correct: node.querySelector('c')?.getAttribute('correct') === 'yes' 
+            text: c?.textContent || '', 
+            correct: c?.getAttribute('correct') === 'yes' 
           },
           d: { 
-            text: node.querySelector('d')?.textContent || '', 
-            correct: node.querySelector('d')?.getAttribute('correct') === 'yes' 
+            text: d?.textContent || '', 
+            correct: d?.getAttribute('correct') === 'yes' 
           },
         },
         selected: false,
@@ -74,7 +85,12 @@ export const importXML = async (file: File, setQuestions: (questions: {
   fastestFingerQuestion: FastestFingerQuestion | null;
   regularQuestions: RegularQuestion[];
 }) => void) => {
-  const text = await file.text();
-  const questions = parseXML(text);
-  setQuestions(questions);
+  try {
+    const text = await file.text();
+    const questions = parseXML(text);
+    setQuestions(questions);
+  } catch (error) {
+    console.error('Error importing XML:', error);
+    throw error;
+  }
 };
