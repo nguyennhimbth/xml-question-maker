@@ -6,9 +6,10 @@ import { FileCode, HelpCircle } from 'lucide-react';
 interface HeaderProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  children: React.ReactNode;
 }
 
-const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
+const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, children }) => {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
@@ -23,6 +24,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
             <TabsTrigger value="regular">Regular Questions</TabsTrigger>
             <TabsTrigger value="export">Export</TabsTrigger>
           </TabsList>
+          {children}
         </Tabs>
         
         <a 
