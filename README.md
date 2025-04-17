@@ -1,73 +1,82 @@
-# Welcome to your Lovable project
 
-## Project info
+# Question Forge Studio
 
-**URL**: https://lovable.dev/projects/fe80cccd-ed52-4f8d-9ae7-b01d2080e696
+A comprehensive application for creating, managing, and exporting quiz questions in XML format. Question Forge Studio supports two types of questions:
 
-## How can I edit this code?
+1. **Fastest Finger First Questions**: These questions ask contestants to arrange four items in a specific order.
+2. **Regular Questions**: Standard multiple-choice questions with one correct answer.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- Create and edit both question types with an intuitive interface
+- Organize questions by type in separate lists
+- Select which questions to include in your export
+- Export questions in a standardized XML format
+- Built with React, TypeScript, and Tailwind CSS
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fe80cccd-ed52-4f8d-9ae7-b01d2080e696) and start prompting.
+## Usage
 
-Changes made via Lovable will be committed automatically to this repo.
+### Creating Questions
 
-**Use your preferred IDE**
+1. Navigate to the appropriate tab (Fastest Finger or Regular Questions)
+2. Click "Add Question"
+3. Fill in the form with your question details
+4. Click "Add Question" to save
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Managing Questions
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- View all your questions in the list view
+- Edit any question by clicking the edit icon
+- Delete questions with the trash icon
+- Select questions for export by checking the checkbox
 
-Follow these steps:
+### Exporting Questions
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. Select the questions you want to include by checking the checkboxes
+   - For Fastest Finger First, only one question can be selected
+   - For Regular Questions, you can select multiple
+2. Go to the Export tab
+3. Review your selections
+4. Click "Export to XML" to download the file
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## XML Format
 
-# Step 3: Install the necessary dependencies.
-npm i
+The exported XML follows this structure:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```xml
+<questions>
+  <fastest difficulty="0">
+    <text>Your fastest finger question text</text>
+    <a>Option A</a>
+    <b>Option B</b>
+    <c>Option C</c>
+    <d>Option D</d>
+    <correctOrder>
+      <one>a</one>
+      <two>b</two>
+      <three>c</three>
+      <four>d</four>
+    </correctOrder>
+  </fastest>
+  <question>
+    <category>Your Category</category>
+    <text>Your question text</text>
+    <a correct="yes/no">Option A</a>
+    <b correct="yes/no">Option B</b>
+    <c correct="yes/no">Option C</c>
+    <d correct="yes/no">Option D</d>
+  </question>
+  <!-- Additional questions follow the same format -->
+</questions>
 ```
 
-**Edit a file directly in GitHub**
+## Getting Started
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Clone this repository
+2. Install dependencies with `npm install`
+3. Start the development server with `npm run dev`
+4. Open your browser to the displayed URL
 
-**Use GitHub Codespaces**
+## License
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/fe80cccd-ed52-4f8d-9ae7-b01d2080e696) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+MIT
