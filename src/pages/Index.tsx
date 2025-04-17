@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { QuestionsProvider, useQuestions } from '@/context/QuestionsContext';
 import { importXML } from '@/utils/xmlImport';
@@ -13,7 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { TabsContent } from '@/components/ui/tabs';
 
-const Index = () => {
+// Create an inner component that uses the context after the provider is set up
+const IndexContent = () => {
   const [activeTab, setActiveTab] = useState<string>('fastest');
   const [showFastestFingerForm, setShowFastestFingerForm] = useState(false);
   const [showRegularQuestionForm, setShowRegularQuestionForm] = useState(false);
@@ -65,125 +67,124 @@ const Index = () => {
   };
 
   return (
-    <QuestionsProvider>
-      <div className="min-h-screen flex flex-col">
-        <Header 
-          activeTab={activeTab} 
-          onTabChange={handleTabChange}
-        >
-          <TabsContent value="fastest" className="absolute left-0 right-0 top-14 bg-background min-h-0">
-            {/* Empty TabsContent - actual content is rendered below */}
-          </TabsContent>
-          <TabsContent value="regular" className="absolute left-0 right-0 top-14 bg-background min-h-0">
-            {/* Empty TabsContent - actual content is rendered below */}
-          </TabsContent>
-          <TabsContent value="export" className="absolute left-0 right-0 top-14 bg-background min-h-0">
-            {/* Empty TabsContent - actual content is rendered below */}
-          </TabsContent>
-        </Header>
-        
-        <main className="flex-1 container py-6">
-          {activeTab === 'fastest' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Fastest Finger First Questions</h2>
-                <div className="flex gap-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImport}
-                    accept=".xml"
-                    className="hidden"
-                  />
-                  <Button 
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Import XML
-                  </Button>
-                  <Button 
-                    onClick={() => setShowFastestFingerForm(true)}
-                    disabled={showFastestFingerForm}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Question
-                  </Button>
-                </div>
-              </div>
-              
-              {showFastestFingerForm ? (
-                <FastestFingerForm 
-                  editQuestion={editingFastestFinger}
-                  onComplete={handleFastestFingerFormComplete}
+    <div className="min-h-screen flex flex-col">
+      <Header 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange}
+      >
+        <TabsContent value="fastest" className="absolute left-0 right-0 top-14 bg-background min-h-0">
+          {/* Empty TabsContent - actual content is rendered below */}
+        </TabsContent>
+        <TabsContent value="regular" className="absolute left-0 right-0 top-14 bg-background min-h-0">
+          {/* Empty TabsContent - actual content is rendered below */}
+        </TabsContent>
+        <TabsContent value="export" className="absolute left-0 right-0 top-14 bg-background min-h-0">
+          {/* Empty TabsContent - actual content is rendered below */}
+        </TabsContent>
+      </Header>
+      
+      <main className="flex-1 container py-6">
+        {activeTab === 'fastest' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Fastest Finger First Questions</h2>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImport}
+                  accept=".xml"
+                  className="hidden"
                 />
-              ) : (
-                <FastestFingerList onEdit={handleEditFastestFinger} />
-              )}
-              
-              <div className="mt-4 p-4 bg-muted rounded-md">
-                <h3 className="font-medium">About Fastest Finger First Questions</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Fastest Finger First questions ask contestants to arrange four items in a specific order.
-                  Only one Fastest Finger First question can be used in the exported quiz.
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {activeTab === 'regular' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Regular Questions</h2>
                 <Button 
-                  onClick={() => setShowRegularQuestionForm(true)}
-                  disabled={showRegularQuestionForm}
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Import XML
+                </Button>
+                <Button 
+                  onClick={() => setShowFastestFingerForm(true)}
+                  disabled={showFastestFingerForm}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Add Question
                 </Button>
               </div>
-              
-              {showRegularQuestionForm ? (
-                <RegularQuestionForm 
-                  editQuestion={editingRegularQuestion}
-                  onComplete={handleRegularQuestionFormComplete}
-                />
-              ) : (
-                <RegularQuestionList onEdit={handleEditRegularQuestion} />
-              )}
-              
-              <div className="mt-4 p-4 bg-muted rounded-md">
-                <h3 className="font-medium">About Regular Questions</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Regular questions have one correct answer out of four options.
-                  You can select multiple regular questions for the exported quiz.
-                </p>
-              </div>
             </div>
-          )}
-          
-          {activeTab === 'export' && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Export Questions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2">
-                  <div className="p-4 bg-muted rounded-md">
-                    <h3 className="font-medium">Export Instructions</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Select questions to include in your XML export by checking the boxes next to each question.
-                      For Fastest Finger First questions, you can only select one.
-                      For Regular Questions, you can select as many as you need.
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      The exported XML will follow the structure shown in the example, with 
-                      the Fastest Finger First question appearing first (if selected), followed by 
-                      all selected Regular Questions.
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4 p-4 border rounded-md">
-                    <h3 className="font-medium">XML Format Preview</h3>
-                    <pre className="mt-2 p-2 bg-muted rounded-md text-xs overflow-auto">
+            
+            {showFastestFingerForm ? (
+              <FastestFingerForm 
+                editQuestion={editingFastestFinger}
+                onComplete={handleFastestFingerFormComplete}
+              />
+            ) : (
+              <FastestFingerList onEdit={handleEditFastestFinger} />
+            )}
+            
+            <div className="mt-4 p-4 bg-muted rounded-md">
+              <h3 className="font-medium">About Fastest Finger First Questions</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Fastest Finger First questions ask contestants to arrange four items in a specific order.
+                Only one Fastest Finger First question can be used in the exported quiz.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {activeTab === 'regular' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Regular Questions</h2>
+              <Button 
+                onClick={() => setShowRegularQuestionForm(true)}
+                disabled={showRegularQuestionForm}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Question
+              </Button>
+            </div>
+            
+            {showRegularQuestionForm ? (
+              <RegularQuestionForm 
+                editQuestion={editingRegularQuestion}
+                onComplete={handleRegularQuestionFormComplete}
+              />
+            ) : (
+              <RegularQuestionList onEdit={handleEditRegularQuestion} />
+            )}
+            
+            <div className="mt-4 p-4 bg-muted rounded-md">
+              <h3 className="font-medium">About Regular Questions</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Regular questions have one correct answer out of four options.
+                You can select multiple regular questions for the exported quiz.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {activeTab === 'export' && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Export Questions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-2">
+                <div className="p-4 bg-muted rounded-md">
+                  <h3 className="font-medium">Export Instructions</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Select questions to include in your XML export by checking the boxes next to each question.
+                    For Fastest Finger First questions, you can only select one.
+                    For Regular Questions, you can select as many as you need.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    The exported XML will follow the structure shown in the example, with 
+                    the Fastest Finger First question appearing first (if selected), followed by 
+                    all selected Regular Questions.
+                  </p>
+                </div>
+                
+                <div className="mt-4 p-4 border rounded-md">
+                  <h3 className="font-medium">XML Format Preview</h3>
+                  <pre className="mt-2 p-2 bg-muted rounded-md text-xs overflow-auto">
 {`<questions>
   <fastest difficulty="0">
     <text>Your fastest finger question text</text>
@@ -208,18 +209,26 @@ const Index = () => {
   </question>
   <!-- Additional questions follow the same format -->
 </questions>`}
-                    </pre>
-                  </div>
-                </div>
-                
-                <div>
-                  <ExportPanel />
+                  </pre>
                 </div>
               </div>
+              
+              <div>
+                <ExportPanel />
+              </div>
             </div>
-          )}
-        </main>
-      </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+// The main Index component now just wraps the content with the provider
+const Index = () => {
+  return (
+    <QuestionsProvider>
+      <IndexContent />
     </QuestionsProvider>
   );
 };
