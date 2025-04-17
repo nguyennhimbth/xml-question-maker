@@ -1,6 +1,7 @@
-
-import React, { useState } from 'react';
-import { QuestionsProvider } from '@/context/QuestionsContext';
+import React, { useState, useRef } from 'react';
+import { QuestionsProvider, useQuestions } from '@/context/QuestionsContext';
+import { importXML } from '@/utils/xmlImport';
+import { toast } from 'sonner';
 import Header from '@/components/Header';
 import FastestFingerForm from '@/components/FastestFingerForm';
 import FastestFingerList from '@/components/FastestFingerList';
@@ -18,6 +19,9 @@ const Index = () => {
   const [showRegularQuestionForm, setShowRegularQuestionForm] = useState(false);
   const [editingFastestFinger, setEditingFastestFinger] = useState<FastestFingerQuestion | undefined>(undefined);
   const [editingRegularQuestion, setEditingRegularQuestion] = useState<RegularQuestion | undefined>(undefined);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setQuestions } = useQuestions();
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -47,6 +51,19 @@ const Index = () => {
     setEditingRegularQuestion(undefined);
   };
 
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        await importXML(file, setQuestions);
+        toast.success('Questions imported successfully');
+      } catch (error) {
+        toast.error('Failed to import questions');
+        console.error('Import error:', error);
+      }
+    }
+  };
+
   return (
     <QuestionsProvider>
       <div className="min-h-screen flex flex-col">
@@ -70,13 +87,28 @@ const Index = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">Fastest Finger First Questions</h2>
-                <Button 
-                  onClick={() => setShowFastestFingerForm(true)}
-                  disabled={showFastestFingerForm}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Question
-                </Button>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImport}
+                    accept=".xml"
+                    className="hidden"
+                  />
+                  <Button 
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Import XML
+                  </Button>
+                  <Button 
+                    onClick={() => setShowFastestFingerForm(true)}
+                    disabled={showFastestFingerForm}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Question
+                  </Button>
+                </div>
               </div>
               
               {showFastestFingerForm ? (

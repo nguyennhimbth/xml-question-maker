@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 
@@ -15,6 +14,10 @@ interface QuestionsContextType {
   toggleRegularQuestionSelection: (id: string) => void;
   getSelectedFastestFingerQuestion: () => FastestFingerQuestion | null;
   getSelectedRegularQuestions: () => RegularQuestion[];
+  setQuestions: (questions: {
+    fastestFingerQuestion: FastestFingerQuestion | null;
+    regularQuestions: RegularQuestion[];
+  }) => void;
 }
 
 const QuestionsContext = createContext<QuestionsContextType | undefined>(undefined);
@@ -92,6 +95,14 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return regularQuestions.filter(q => q.selected);
   };
 
+  const setQuestions = ({ fastestFingerQuestion, regularQuestions }: {
+    fastestFingerQuestion: FastestFingerQuestion | null;
+    regularQuestions: RegularQuestion[];
+  }) => {
+    setFastestFingerQuestions(fastestFingerQuestion ? [fastestFingerQuestion] : []);
+    setRegularQuestions(regularQuestions);
+  };
+
   return (
     <QuestionsContext.Provider value={{
       fastestFingerQuestions,
@@ -105,7 +116,8 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       toggleFastestFingerQuestionSelection,
       toggleRegularQuestionSelection,
       getSelectedFastestFingerQuestion,
-      getSelectedRegularQuestions
+      getSelectedRegularQuestions,
+      setQuestions,
     }}>
       {children}
     </QuestionsContext.Provider>
