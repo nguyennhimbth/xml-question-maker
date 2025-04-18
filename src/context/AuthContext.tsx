@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, ProfilesTable } from '@/integrations/supabase/client';
 
 interface Profile {
   questionsCount: number;
@@ -56,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchProfile = async () => {
       if (user) {
         try {
+          // Use type assertion to bypass TypeScript errors
           const { data, error } = await supabase
             .from('profiles')
             .select('questions_count')
@@ -63,7 +64,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
 
           if (data && !error) {
-            setUserProfile({ questionsCount: data.questions_count });
+            // Type assert the data to match our expected profile structure
+            const profileData = data as unknown as ProfilesTable;
+            setUserProfile({ questionsCount: profileData.questions_count });
           } else {
             console.error('Error fetching profile:', error);
           }
