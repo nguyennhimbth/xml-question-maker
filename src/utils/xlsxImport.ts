@@ -88,8 +88,8 @@ export const importXLSX = async (file: File, setQuestions: (questions: {
       const normalSheet = workbook.Sheets[normalSheetName];
       const normalData = utils.sheet_to_json<any>(normalSheet, { header: 1 });
       
-      // Skip first two rows (header rows)
-      for (let i = 2; i < normalData.length; i++) {
+      // Skip first THREE rows (header rows) - Updated from 2 to 3
+      for (let i = 3; i < normalData.length; i++) {
         const row = normalData[i];
         if (!row || row.length < 6) continue; // Skip empty rows
         
@@ -125,8 +125,8 @@ export const importXLSX = async (file: File, setQuestions: (questions: {
       const fastestSheet = workbook.Sheets[fastestSheetName];
       const fastestData = utils.sheet_to_json<any>(fastestSheet, { header: 1 });
       
-      // Skip first two rows (header rows)
-      for (let i = 2; i < fastestData.length; i++) {
+      // Skip first THREE rows (header rows) - Updated from 2 to 3
+      for (let i = 3; i < fastestData.length; i++) {
         const row = fastestData[i];
         if (!row || row.length < 6) continue; // Skip empty rows
         

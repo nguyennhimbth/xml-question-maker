@@ -122,7 +122,7 @@ const ImportPanel = () => {
                 Columns: Id, Question, A, B, C, D, CORRECT ORDER (can be formatted as ABCD, A-B-C-D, 1234, or 1-2-3-4)
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                First two rows will be ignored (headers).
+                First three rows will be ignored (headers).
               </p>
             </div>
           </TabsContent>
