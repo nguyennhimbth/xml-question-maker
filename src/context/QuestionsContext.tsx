@@ -1,17 +1,15 @@
-
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
-import { v4 as uuidv4 } from 'uuid';
 
 interface QuestionsContextType {
   fastestFingerQuestions: FastestFingerQuestion[];
   regularQuestions: RegularQuestion[];
-  addFastestFingerQuestion: (question: FastestFingerQuestion) => Promise<boolean>;
-  addRegularQuestion: (question: RegularQuestion) => Promise<boolean>;
-  updateFastestFingerQuestion: (id: string, question: Partial<FastestFingerQuestion>) => Promise<boolean>;
-  updateRegularQuestion: (id: string, question: Partial<RegularQuestion>) => Promise<boolean>;
-  deleteFastestFingerQuestion: (id: string) => Promise<boolean>;
-  deleteRegularQuestion: (id: string) => Promise<boolean>;
+  addFastestFingerQuestion: (question: FastestFingerQuestion) => void;
+  addRegularQuestion: (question: RegularQuestion) => void;
+  updateFastestFingerQuestion: (id: string, question: Partial<FastestFingerQuestion>) => void;
+  updateRegularQuestion: (id: string, question: Partial<RegularQuestion>) => void;
+  deleteFastestFingerQuestion: (id: string) => void;
+  deleteRegularQuestion: (id: string) => void;
   toggleFastestFingerQuestionSelection: (id: string) => void;
   toggleRegularQuestionSelection: (id: string) => void;
   getSelectedFastestFingerQuestion: () => FastestFingerQuestion | null;
@@ -25,89 +23,61 @@ interface QuestionsContextType {
 const QuestionsContext = createContext<QuestionsContextType | undefined>(undefined);
 
 export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [fastestFingerQuestions, setFastestFingerQuestions] = useState<FastestFingerQuestion[]>([]);
-  const [regularQuestions, setRegularQuestions] = useState<RegularQuestion[]>([]);
+  const [fastestFingerQuestions, setFastestFingerQuestions] = useState<FastestFingerQuestion[]>(() => {
+    const saved = localStorage.getItem('fastestFingerQuestions');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [regularQuestions, setRegularQuestions] = useState<RegularQuestion[]>(() => {
+    const saved = localStorage.getItem('regularQuestions');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  const addFastestFingerQuestion = async (question: FastestFingerQuestion) => {
-    try {
-      const newQuestion = {
-        ...question,
-        id: uuidv4(),
-        selected: false
-      };
-      setFastestFingerQuestions(prev => [...prev, newQuestion]);
-      return true;
-    } catch (error) {
-      console.error('Error adding question:', error);
-      return false;
-    }
+  // Save to localStorage whenever the questions change
+  useEffect(() => {
+    localStorage.setItem('fastestFingerQuestions', JSON.stringify(fastestFingerQuestions));
+  }, [fastestFingerQuestions]);
+
+  useEffect(() => {
+    localStorage.setItem('regularQuestions', JSON.stringify(regularQuestions));
+  }, [regularQuestions]);
+
+  const addFastestFingerQuestion = (question: FastestFingerQuestion) => {
+    setFastestFingerQuestions(prev => [...prev, question]);
   };
 
-  const addRegularQuestion = async (question: RegularQuestion) => {
-    try {
-      const newQuestion = {
-        ...question,
-        id: uuidv4(),
-        selected: false
-      };
-      setRegularQuestions(prev => [...prev, newQuestion]);
-      return true;
-    } catch (error) {
-      console.error('Error adding question:', error);
-      return false;
-    }
+  const addRegularQuestion = (question: RegularQuestion) => {
+    setRegularQuestions(prev => [...prev, question]);
   };
 
-  const updateFastestFingerQuestion = async (id: string, updatedQuestion: Partial<FastestFingerQuestion>) => {
-    try {
-      setFastestFingerQuestions(prev =>
-        prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
-      );
-      return true;
-    } catch (error) {
-      console.error('Error updating question:', error);
-      return false;
-    }
+  const updateFastestFingerQuestion = (id: string, updatedQuestion: Partial<FastestFingerQuestion>) => {
+    setFastestFingerQuestions(prev => 
+      prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
+    );
   };
 
-  const updateRegularQuestion = async (id: string, updatedQuestion: Partial<RegularQuestion>) => {
-    try {
-      setRegularQuestions(prev =>
-        prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
-      );
-      return true;
-    } catch (error) {
-      console.error('Error updating question:', error);
-      return false;
-    }
+  const updateRegularQuestion = (id: string, updatedQuestion: Partial<RegularQuestion>) => {
+    setRegularQuestions(prev => 
+      prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
+    );
   };
 
-  const deleteFastestFingerQuestion = async (id: string) => {
-    try {
-      setFastestFingerQuestions(prev => prev.filter(q => q.id !== id));
-      return true;
-    } catch (error) {
-      console.error('Error deleting question:', error);
-      return false;
-    }
+  const deleteFastestFingerQuestion = (id: string) => {
+    setFastestFingerQuestions(prev => prev.filter(q => q.id !== id));
   };
 
-  const deleteRegularQuestion = async (id: string) => {
-    try {
-      setRegularQuestions(prev => prev.filter(q => q.id !== id));
-      return true;
-    } catch (error) {
-      console.error('Error deleting question:', error);
-      return false;
-    }
+  const deleteRegularQuestion = (id: string) => {
+    setRegularQuestions(prev => prev.filter(q => q.id !== id));
   };
 
   const toggleFastestFingerQuestionSelection = (id: string) => {
     setFastestFingerQuestions(prev => {
-      return prev.map(q => ({
+      // Only one fastest finger question can be selected
+      const newQuestions = prev.map(q => ({
         ...q,
-        selected: q.id === id
+        selected: q.id === id // Only the clicked one is selected
       }));
+      return newQuestions;
     });
   };
 
@@ -125,16 +95,12 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return regularQuestions.filter(q => q.selected);
   };
 
-  const setQuestions = (questions: {
+  const setQuestions = ({ fastestFingerQuestion, regularQuestions }: {
     fastestFingerQuestion: FastestFingerQuestion | null;
     regularQuestions: RegularQuestion[];
   }) => {
-    const { fastestFingerQuestion, regularQuestions: newRegularQuestions } = questions;
-    
-    if (fastestFingerQuestion) {
-      setFastestFingerQuestions([fastestFingerQuestion]);
-    }
-    setRegularQuestions(newRegularQuestions);
+    setFastestFingerQuestions(fastestFingerQuestion ? [fastestFingerQuestion] : []);
+    setRegularQuestions(regularQuestions);
   };
 
   return (

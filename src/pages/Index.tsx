@@ -1,13 +1,14 @@
+
 import React, { useState, useRef } from 'react';
 import { QuestionsProvider, useQuestions } from '@/context/QuestionsContext';
-import HeaderContent from '@/components/HeaderContent';
+import { importXML } from '@/utils/xmlImport';
+import { toast } from 'sonner';
+import Header from '@/components/Header';
 import FastestFingerForm from '@/components/FastestFingerForm';
 import FastestFingerList from '@/components/FastestFingerList';
 import RegularQuestionForm from '@/components/RegularQuestionForm';
 import RegularQuestionList from '@/components/RegularQuestionList';
-import ImportPanel from '@/components/ImportPanel';
 import ExportPanel from '@/components/ExportPanel';
-import QuestionCounter from '@/components/QuestionCounter';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -20,6 +21,9 @@ const IndexContent = () => {
   const [showRegularQuestionForm, setShowRegularQuestionForm] = useState(false);
   const [editingFastestFinger, setEditingFastestFinger] = useState<FastestFingerQuestion | undefined>(undefined);
   const [editingRegularQuestion, setEditingRegularQuestion] = useState<RegularQuestion | undefined>(undefined);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setQuestions } = useQuestions();
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -49,9 +53,22 @@ const IndexContent = () => {
     setEditingRegularQuestion(undefined);
   };
 
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        await importXML(file, setQuestions);
+        toast.success('Questions imported successfully');
+      } catch (error) {
+        toast.error('Failed to import questions');
+        console.error('Import error:', error);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      <HeaderContent 
+      <Header 
         activeTab={activeTab} 
         onTabChange={handleTabChange}
       >
@@ -61,29 +78,38 @@ const IndexContent = () => {
         <TabsContent value="regular" className="absolute left-0 right-0 top-14 bg-background min-h-0">
           {/* Empty TabsContent - actual content is rendered below */}
         </TabsContent>
-        <TabsContent value="import" className="absolute left-0 right-0 top-14 bg-background min-h-0">
-          {/* Empty TabsContent - actual content is rendered below */}
-        </TabsContent>
         <TabsContent value="export" className="absolute left-0 right-0 top-14 bg-background min-h-0">
           {/* Empty TabsContent - actual content is rendered below */}
         </TabsContent>
-      </HeaderContent>
+      </Header>
       
       <main className="flex-1 container py-6">
-        {/* Question Counter - Show on all tabs */}
-        <QuestionCounter />
-        
         {activeTab === 'fastest' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Fastest Finger First Questions</h2>
-              <Button 
-                onClick={() => setShowFastestFingerForm(true)}
-                disabled={showFastestFingerForm}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Question
-              </Button>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImport}
+                  accept=".xml"
+                  className="hidden"
+                />
+                <Button 
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Import XML
+                </Button>
+                <Button 
+                  onClick={() => setShowFastestFingerForm(true)}
+                  disabled={showFastestFingerForm}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Question
+                </Button>
+              </div>
             </div>
             
             {showFastestFingerForm ? (
@@ -133,44 +159,6 @@ const IndexContent = () => {
                 Regular questions have one correct answer out of four options.
                 You can select multiple regular questions for the exported quiz.
               </p>
-            </div>
-          </div>
-        )}
-        
-        {activeTab === 'import' && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Import Questions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
-                <div className="p-4 bg-muted rounded-md">
-                  <h3 className="font-medium">Import Instructions</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Import questions from XML or Excel (XLSX) files using the panel on the right.
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    <strong>Excel Import Format:</strong> The Excel file should have two sheets:
-                  </p>
-                  <ul className="list-disc pl-5 text-sm text-muted-foreground mt-1">
-                    <li>A sheet named "NORMAL" for regular questions</li>
-                    <li>A sheet named "FASTEST FINGER FIRST" for the fastest finger questions</li>
-                  </ul>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    The first two rows are considered headers and will be ignored.
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    <strong>Fastest Finger First Sheet Format:</strong> Id, Question, A, B, C, D, CORRECT ORDER<br />
-                    The CORRECT ORDER can be formatted as: ABCD, A-B-C-D, 1234, or 1-2-3-4
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    <strong>Normal Questions Sheet Format:</strong> Id, Question, A, B, C, D, ANSWER<br />
-                    The ANSWER column should contain A, B, C, or D to indicate the correct answer.
-                  </p>
-                </div>
-              </div>
-              
-              <div>
-                <ImportPanel />
-              </div>
             </div>
           </div>
         )}
