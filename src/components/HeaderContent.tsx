@@ -15,19 +15,19 @@ const HeaderContent = ({ activeTab, onTabChange, children }: HeaderProps) => {
         <h1 className="text-xl font-semibold">Quiz Question Editor</h1>
         
         <div className="flex items-center gap-4">
-          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={onTabChange} className="w-auto">
+          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={onTabChange}>
             <TabsList>
               <TabsTrigger value="fastest">Fastest Finger</TabsTrigger>
               <TabsTrigger value="regular">Regular</TabsTrigger>
               <TabsTrigger value="import">Import</TabsTrigger>
               <TabsTrigger value="export">Export</TabsTrigger>
             </TabsList>
+            {children}
           </Tabs>
           
           <UserDropdown />
         </div>
       </div>
-      {children}
     </header>
   );
 };
