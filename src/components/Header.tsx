@@ -14,7 +14,11 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, children }) => 
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex items-center">
-          <FileCode className="mr-2 h-6 w-6" />
+          <img 
+            src="/lovable-uploads/2d9f4f6c-8e0e-4ebe-aae6-ef1ebbc01244.png" 
+            alt="Question Forge Studio" 
+            className="mr-2 h-8 w-8"
+          />
           <h1 className="font-bold">Question Forge Studio</h1>
         </div>
         

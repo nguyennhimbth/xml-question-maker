@@ -91,8 +91,9 @@ export const importXLSX = async (file: File, setQuestions: (questions: {
       // Skip first two rows (header rows)
       for (let i = 2; i < normalData.length; i++) {
         const row = normalData[i];
-        if (!row || row.length < 6) continue; // Skip empty rows
+        if (!row || row.length < 7) continue; // Skip empty rows
         
+        const category = row[0]?.toString().trim() || 'Imported';
         const questionText = row[1]?.toString().trim();
         if (!questionText) continue; // Skip rows without question text
         
@@ -106,7 +107,7 @@ export const importXLSX = async (file: File, setQuestions: (questions: {
         if (questionText && (optionA || optionB || optionC || optionD)) {
           regularQuestions.push({
             id: uuidv4(),
-            category: 'Imported', // Default category
+            category: category,
             text: questionText,
             answers: {
               a: { text: optionA, correct: correctAnswer === 'A' },
