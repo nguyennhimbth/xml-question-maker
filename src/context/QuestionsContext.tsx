@@ -57,7 +57,7 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const fastest: FastestFingerQuestion[] = [];
           const regular: RegularQuestion[] = [];
 
-          questionsData.forEach(item => {
+          questionsData.forEach((item: any) => {
             if (item.type === 'fastest') {
               fastest.push(item.question_data as FastestFingerQuestion);
             } else if (item.type === 'regular') {

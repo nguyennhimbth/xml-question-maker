@@ -3,12 +3,16 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Profile {
+  questionsCount: number;
+}
+
 interface AuthContextProps {
   session: Session | null;
   user: User | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  userProfile: { questionsCount: number } | null;
+  userProfile: Profile | null;
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -23,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<{ questionsCount: number } | null>(null);
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     // Set up auth state listener
@@ -51,14 +55,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchProfile = async () => {
       if (user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('questions_count')
-          .eq('id', user.id)
-          .single();
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('questions_count')
+            .eq('id', user.id)
+            .single();
 
-        if (data && !error) {
-          setUserProfile({ questionsCount: data.questions_count });
+          if (data && !error) {
+            setUserProfile({ questionsCount: data.questions_count });
+          } else {
+            console.error('Error fetching profile:', error);
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
         }
       } else {
         setUserProfile(null);
