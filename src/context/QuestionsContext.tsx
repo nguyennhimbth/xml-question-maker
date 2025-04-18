@@ -1,10 +1,7 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
-import { supabase, UserQuestionTable } from '@/integrations/supabase/client';
-import { useAuth } from './AuthContext';
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from '@/hooks/use-toast';
 
 interface QuestionsContextType {
   fastestFingerQuestions: FastestFingerQuestion[];
@@ -30,334 +27,87 @@ const QuestionsContext = createContext<QuestionsContextType | undefined>(undefin
 export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [fastestFingerQuestions, setFastestFingerQuestions] = useState<FastestFingerQuestion[]>([]);
   const [regularQuestions, setRegularQuestions] = useState<RegularQuestion[]>([]);
-  const { user, userProfile } = useAuth();
-  const { toast } = useToast();
-  
-  // Load questions from Supabase when the user changes
-  useEffect(() => {
-    const loadQuestions = async () => {
-      if (!user) {
-        setFastestFingerQuestions([]);
-        setRegularQuestions([]);
-        return;
-      }
-
-      try {
-        // Use type assertion to bypass TypeScript errors
-        const { data: questionsData, error } = await supabase
-          .from('user_questions')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (error) {
-          console.error('Error loading questions:', error);
-          return;
-        }
-
-        if (questionsData) {
-          const fastest: FastestFingerQuestion[] = [];
-          const regular: RegularQuestion[] = [];
-
-          // Type assert questionsData to an array of UserQuestionTable
-          const typedData = questionsData as unknown as UserQuestionTable[];
-
-          typedData.forEach((item) => {
-            if (item.type === 'fastest') {
-              fastest.push(item.question_data as FastestFingerQuestion);
-            } else if (item.type === 'regular') {
-              regular.push(item.question_data as RegularQuestion);
-            }
-          });
-
-          setFastestFingerQuestions(fastest);
-          setRegularQuestions(regular);
-        }
-      } catch (error) {
-        console.error('Error loading questions:', error);
-      }
-    };
-
-    loadQuestions();
-  }, [user]);
 
   const addFastestFingerQuestion = async (question: FastestFingerQuestion) => {
-    if (!user) return false;
-    if (userProfile?.questionsCount >= 20) {
-      toast({
-        title: "Limit Reached",
-        description: "You've reached the maximum of 20 questions. Delete some questions to add more.",
-        variant: "destructive"
-      });
-      return false;
-    }
-
     try {
       const newQuestion = {
         ...question,
         id: uuidv4(),
         selected: false
       };
-
-      // Use type assertion to bypass TypeScript errors
-      const { error } = await supabase
-        .from('user_questions')
-        .insert({
-          user_id: user.id,
-          type: 'fastest',
-          question_data: newQuestion
-        } as any);
-
-      if (error) {
-        console.error('Error adding question:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add question: " + error.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-
       setFastestFingerQuestions(prev => [...prev, newQuestion]);
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add question: " + error.message,
-        variant: "destructive"
-      });
       return false;
     }
   };
 
   const addRegularQuestion = async (question: RegularQuestion) => {
-    if (!user) return false;
-    if (userProfile?.questionsCount >= 20) {
-      toast({
-        title: "Limit Reached",
-        description: "You've reached the maximum of 20 questions. Delete some questions to add more.",
-        variant: "destructive"
-      });
-      return false;
-    }
-
     try {
       const newQuestion = {
         ...question,
         id: uuidv4(),
         selected: false
       };
-
-      // Use type assertion to bypass TypeScript errors
-      const { error } = await supabase
-        .from('user_questions')
-        .insert({
-          user_id: user.id,
-          type: 'regular',
-          question_data: newQuestion
-        } as any);
-
-      if (error) {
-        console.error('Error adding question:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add question: " + error.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-
       setRegularQuestions(prev => [...prev, newQuestion]);
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add question: " + error.message,
-        variant: "destructive"
-      });
       return false;
     }
   };
 
   const updateFastestFingerQuestion = async (id: string, updatedQuestion: Partial<FastestFingerQuestion>) => {
-    if (!user) return false;
-
     try {
-      // Find the question to update
-      const questionToUpdate = fastestFingerQuestions.find(q => q.id === id);
-      if (!questionToUpdate) return false;
-
-      // Create the updated question
-      const updatedFullQuestion = {
-        ...questionToUpdate,
-        ...updatedQuestion
-      };
-
-      // Update in Supabase with type assertion
-      const { error } = await supabase
-        .from('user_questions')
-        .update({
-          question_data: updatedFullQuestion
-        } as any)
-        .eq('user_id', user.id)
-        .eq('type', 'fastest')
-        .filter('question_data->id', 'eq', id);
-
-      if (error) {
-        console.error('Error updating question:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update question: " + error.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      // Update local state
-      setFastestFingerQuestions(prev => 
+      setFastestFingerQuestions(prev =>
         prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
       );
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update question: " + error.message,
-        variant: "destructive"
-      });
       return false;
     }
   };
 
   const updateRegularQuestion = async (id: string, updatedQuestion: Partial<RegularQuestion>) => {
-    if (!user) return false;
-
     try {
-      // Find the question to update
-      const questionToUpdate = regularQuestions.find(q => q.id === id);
-      if (!questionToUpdate) return false;
-
-      // Create the updated question
-      const updatedFullQuestion = {
-        ...questionToUpdate,
-        ...updatedQuestion
-      };
-
-      // Update in Supabase with type assertion
-      const { error } = await supabase
-        .from('user_questions')
-        .update({
-          question_data: updatedFullQuestion
-        } as any)
-        .eq('user_id', user.id)
-        .eq('type', 'regular')
-        .filter('question_data->id', 'eq', id);
-
-      if (error) {
-        console.error('Error updating question:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update question: " + error.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      // Update local state
-      setRegularQuestions(prev => 
+      setRegularQuestions(prev =>
         prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
       );
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update question: " + error.message,
-        variant: "destructive"
-      });
       return false;
     }
   };
 
   const deleteFastestFingerQuestion = async (id: string) => {
-    if (!user) return false;
-
     try {
-      // Delete from Supabase with type assertion
-      const { error } = await supabase
-        .from('user_questions')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('type', 'fastest')
-        .filter('question_data->id', 'eq', id);
-
-      if (error) {
-        console.error('Error deleting question:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete question: " + error.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-
       setFastestFingerQuestions(prev => prev.filter(q => q.id !== id));
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete question: " + error.message,
-        variant: "destructive"
-      });
       return false;
     }
   };
 
   const deleteRegularQuestion = async (id: string) => {
-    if (!user) return false;
-
     try {
-      // Delete from Supabase with type assertion
-      const { error } = await supabase
-        .from('user_questions')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('type', 'regular')
-        .filter('question_data->id', 'eq', id);
-
-      if (error) {
-        console.error('Error deleting question:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete question: " + error.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-
       setRegularQuestions(prev => prev.filter(q => q.id !== id));
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete question: " + error.message,
-        variant: "destructive"
-      });
       return false;
     }
   };
 
   const toggleFastestFingerQuestionSelection = (id: string) => {
     setFastestFingerQuestions(prev => {
-      // Only one fastest finger question can be selected
-      const newQuestions = prev.map(q => ({
+      return prev.map(q => ({
         ...q,
-        selected: q.id === id // Only the clicked one is selected
+        selected: q.id === id
       }));
-      return newQuestions;
     });
   };
 
@@ -381,13 +131,10 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }) => {
     const { fastestFingerQuestion, regularQuestions: newRegularQuestions } = questions;
     
-    // Only update if user is logged in
-    if (user) {
-      if (fastestFingerQuestion) {
-        setFastestFingerQuestions([fastestFingerQuestion]);
-      }
-      setRegularQuestions(newRegularQuestions);
+    if (fastestFingerQuestion) {
+      setFastestFingerQuestions([fastestFingerQuestion]);
     }
+    setRegularQuestions(newRegularQuestions);
   };
 
   return (
