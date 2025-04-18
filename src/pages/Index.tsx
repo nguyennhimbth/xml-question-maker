@@ -1,13 +1,14 @@
 
 import React, { useState, useRef } from 'react';
 import { QuestionsProvider, useQuestions } from '@/context/QuestionsContext';
-import Header from '@/components/Header';
+import HeaderContent from '@/components/HeaderContent';
 import FastestFingerForm from '@/components/FastestFingerForm';
 import FastestFingerList from '@/components/FastestFingerList';
 import RegularQuestionForm from '@/components/RegularQuestionForm';
 import RegularQuestionList from '@/components/RegularQuestionList';
 import ImportPanel from '@/components/ImportPanel';
 import ExportPanel from '@/components/ExportPanel';
+import QuestionCounter from '@/components/QuestionCounter';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -51,7 +52,7 @@ const IndexContent = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header 
+      <HeaderContent 
         activeTab={activeTab} 
         onTabChange={handleTabChange}
       >
@@ -67,9 +68,12 @@ const IndexContent = () => {
         <TabsContent value="export" className="absolute left-0 right-0 top-14 bg-background min-h-0">
           {/* Empty TabsContent - actual content is rendered below */}
         </TabsContent>
-      </Header>
+      </HeaderContent>
       
       <main className="flex-1 container py-6">
+        {/* Question Counter - Show on all tabs */}
+        <QuestionCounter />
+        
         {activeTab === 'fastest' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">

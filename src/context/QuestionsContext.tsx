@@ -1,15 +1,20 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './AuthContext';
+import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/hooks/use-toast';
 
 interface QuestionsContextType {
   fastestFingerQuestions: FastestFingerQuestion[];
   regularQuestions: RegularQuestion[];
-  addFastestFingerQuestion: (question: FastestFingerQuestion) => void;
-  addRegularQuestion: (question: RegularQuestion) => void;
-  updateFastestFingerQuestion: (id: string, question: Partial<FastestFingerQuestion>) => void;
-  updateRegularQuestion: (id: string, question: Partial<RegularQuestion>) => void;
-  deleteFastestFingerQuestion: (id: string) => void;
-  deleteRegularQuestion: (id: string) => void;
+  addFastestFingerQuestion: (question: FastestFingerQuestion) => Promise<boolean>;
+  addRegularQuestion: (question: RegularQuestion) => Promise<boolean>;
+  updateFastestFingerQuestion: (id: string, question: Partial<FastestFingerQuestion>) => Promise<boolean>;
+  updateRegularQuestion: (id: string, question: Partial<RegularQuestion>) => Promise<boolean>;
+  deleteFastestFingerQuestion: (id: string) => Promise<boolean>;
+  deleteRegularQuestion: (id: string) => Promise<boolean>;
   toggleFastestFingerQuestionSelection: (id: string) => void;
   toggleRegularQuestionSelection: (id: string) => void;
   getSelectedFastestFingerQuestion: () => FastestFingerQuestion | null;
@@ -23,51 +28,318 @@ interface QuestionsContextType {
 const QuestionsContext = createContext<QuestionsContextType | undefined>(undefined);
 
 export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [fastestFingerQuestions, setFastestFingerQuestions] = useState<FastestFingerQuestion[]>(() => {
-    const saved = localStorage.getItem('fastestFingerQuestions');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [fastestFingerQuestions, setFastestFingerQuestions] = useState<FastestFingerQuestion[]>([]);
+  const [regularQuestions, setRegularQuestions] = useState<RegularQuestion[]>([]);
+  const { user, userProfile } = useAuth();
+  const { toast } = useToast();
   
-  const [regularQuestions, setRegularQuestions] = useState<RegularQuestion[]>(() => {
-    const saved = localStorage.getItem('regularQuestions');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Save to localStorage whenever the questions change
+  // Load questions from Supabase when the user changes
   useEffect(() => {
-    localStorage.setItem('fastestFingerQuestions', JSON.stringify(fastestFingerQuestions));
-  }, [fastestFingerQuestions]);
+    const loadQuestions = async () => {
+      if (!user) {
+        setFastestFingerQuestions([]);
+        setRegularQuestions([]);
+        return;
+      }
 
-  useEffect(() => {
-    localStorage.setItem('regularQuestions', JSON.stringify(regularQuestions));
-  }, [regularQuestions]);
+      try {
+        const { data: questionsData, error } = await supabase
+          .from('user_questions')
+          .select('*')
+          .eq('user_id', user.id);
 
-  const addFastestFingerQuestion = (question: FastestFingerQuestion) => {
-    setFastestFingerQuestions(prev => [...prev, question]);
+        if (error) {
+          console.error('Error loading questions:', error);
+          return;
+        }
+
+        if (questionsData) {
+          const fastest: FastestFingerQuestion[] = [];
+          const regular: RegularQuestion[] = [];
+
+          questionsData.forEach(item => {
+            if (item.type === 'fastest') {
+              fastest.push(item.question_data as FastestFingerQuestion);
+            } else if (item.type === 'regular') {
+              regular.push(item.question_data as RegularQuestion);
+            }
+          });
+
+          setFastestFingerQuestions(fastest);
+          setRegularQuestions(regular);
+        }
+      } catch (error) {
+        console.error('Error loading questions:', error);
+      }
+    };
+
+    loadQuestions();
+  }, [user]);
+
+  const addFastestFingerQuestion = async (question: FastestFingerQuestion) => {
+    if (!user) return false;
+    if (userProfile?.questionsCount >= 20) {
+      toast({
+        title: "Limit Reached",
+        description: "You've reached the maximum of 20 questions. Delete some questions to add more.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      const newQuestion = {
+        ...question,
+        id: uuidv4(),
+        selected: false
+      };
+
+      const { error } = await supabase
+        .from('user_questions')
+        .insert({
+          user_id: user.id,
+          type: 'fastest',
+          question_data: newQuestion
+        });
+
+      if (error) {
+        console.error('Error adding question:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add question: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      setFastestFingerQuestions(prev => [...prev, newQuestion]);
+      return true;
+    } catch (error: any) {
+      console.error('Error adding question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add question: " + error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
-  const addRegularQuestion = (question: RegularQuestion) => {
-    setRegularQuestions(prev => [...prev, question]);
+  const addRegularQuestion = async (question: RegularQuestion) => {
+    if (!user) return false;
+    if (userProfile?.questionsCount >= 20) {
+      toast({
+        title: "Limit Reached",
+        description: "You've reached the maximum of 20 questions. Delete some questions to add more.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      const newQuestion = {
+        ...question,
+        id: uuidv4(),
+        selected: false
+      };
+
+      const { error } = await supabase
+        .from('user_questions')
+        .insert({
+          user_id: user.id,
+          type: 'regular',
+          question_data: newQuestion
+        });
+
+      if (error) {
+        console.error('Error adding question:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add question: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      setRegularQuestions(prev => [...prev, newQuestion]);
+      return true;
+    } catch (error: any) {
+      console.error('Error adding question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add question: " + error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
-  const updateFastestFingerQuestion = (id: string, updatedQuestion: Partial<FastestFingerQuestion>) => {
-    setFastestFingerQuestions(prev => 
-      prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
-    );
+  const updateFastestFingerQuestion = async (id: string, updatedQuestion: Partial<FastestFingerQuestion>) => {
+    if (!user) return false;
+
+    try {
+      // Find the question to update
+      const questionToUpdate = fastestFingerQuestions.find(q => q.id === id);
+      if (!questionToUpdate) return false;
+
+      // Create the updated question
+      const updatedFullQuestion = {
+        ...questionToUpdate,
+        ...updatedQuestion
+      };
+
+      // Update in Supabase
+      const { error } = await supabase
+        .from('user_questions')
+        .update({
+          question_data: updatedFullQuestion
+        })
+        .eq('user_id', user.id)
+        .eq('type', 'fastest')
+        .filter('question_data->id', 'eq', id);
+
+      if (error) {
+        console.error('Error updating question:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update question: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // Update local state
+      setFastestFingerQuestions(prev => 
+        prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
+      );
+      return true;
+    } catch (error: any) {
+      console.error('Error updating question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update question: " + error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
-  const updateRegularQuestion = (id: string, updatedQuestion: Partial<RegularQuestion>) => {
-    setRegularQuestions(prev => 
-      prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
-    );
+  const updateRegularQuestion = async (id: string, updatedQuestion: Partial<RegularQuestion>) => {
+    if (!user) return false;
+
+    try {
+      // Find the question to update
+      const questionToUpdate = regularQuestions.find(q => q.id === id);
+      if (!questionToUpdate) return false;
+
+      // Create the updated question
+      const updatedFullQuestion = {
+        ...questionToUpdate,
+        ...updatedQuestion
+      };
+
+      // Update in Supabase
+      const { error } = await supabase
+        .from('user_questions')
+        .update({
+          question_data: updatedFullQuestion
+        })
+        .eq('user_id', user.id)
+        .eq('type', 'regular')
+        .filter('question_data->id', 'eq', id);
+
+      if (error) {
+        console.error('Error updating question:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update question: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // Update local state
+      setRegularQuestions(prev => 
+        prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
+      );
+      return true;
+    } catch (error: any) {
+      console.error('Error updating question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update question: " + error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
-  const deleteFastestFingerQuestion = (id: string) => {
-    setFastestFingerQuestions(prev => prev.filter(q => q.id !== id));
+  const deleteFastestFingerQuestion = async (id: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('user_questions')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('type', 'fastest')
+        .filter('question_data->id', 'eq', id);
+
+      if (error) {
+        console.error('Error deleting question:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete question: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      setFastestFingerQuestions(prev => prev.filter(q => q.id !== id));
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete question: " + error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
-  const deleteRegularQuestion = (id: string) => {
-    setRegularQuestions(prev => prev.filter(q => q.id !== id));
+  const deleteRegularQuestion = async (id: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('user_questions')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('type', 'regular')
+        .filter('question_data->id', 'eq', id);
+
+      if (error) {
+        console.error('Error deleting question:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete question: " + error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      setRegularQuestions(prev => prev.filter(q => q.id !== id));
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete question: " + error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const toggleFastestFingerQuestionSelection = (id: string) => {
@@ -95,12 +367,19 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return regularQuestions.filter(q => q.selected);
   };
 
-  const setQuestions = ({ fastestFingerQuestion, regularQuestions }: {
+  const setQuestions = (questions: {
     fastestFingerQuestion: FastestFingerQuestion | null;
     regularQuestions: RegularQuestion[];
   }) => {
-    setFastestFingerQuestions(fastestFingerQuestion ? [fastestFingerQuestion] : []);
-    setRegularQuestions(regularQuestions);
+    const { fastestFingerQuestion, regularQuestions: newRegularQuestions } = questions;
+    
+    // Only update if user is logged in
+    if (user) {
+      if (fastestFingerQuestion) {
+        setFastestFingerQuestions([fastestFingerQuestion]);
+      }
+      setRegularQuestions(newRegularQuestions);
+    }
   };
 
   return (
