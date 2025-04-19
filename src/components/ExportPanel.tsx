@@ -2,14 +2,15 @@
 import React from 'react';
 import { useQuestions } from '@/context/QuestionsContext';
 import { downloadXML } from '@/utils/xmlExport';
+import { downloadXLSX } from '@/utils/xlsxExport';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, FileSpreadsheet } from 'lucide-react';
 
 const ExportPanel: React.FC = () => {
   const { getSelectedFastestFingerQuestion, getSelectedRegularQuestions } = useQuestions();
 
-  const handleExport = () => {
+  const handleExportXML = () => {
     const fastestFingerQuestion = getSelectedFastestFingerQuestion();
     const regularQuestions = getSelectedRegularQuestions();
     
@@ -19,6 +20,18 @@ const ExportPanel: React.FC = () => {
     }
     
     downloadXML(fastestFingerQuestion, regularQuestions);
+  };
+  
+  const handleExportXLSX = () => {
+    const fastestFingerQuestion = getSelectedFastestFingerQuestion();
+    const regularQuestions = getSelectedRegularQuestions();
+    
+    if (!fastestFingerQuestion && regularQuestions.length === 0) {
+      alert('Please select at least one question to export.');
+      return;
+    }
+    
+    downloadXLSX(fastestFingerQuestion, regularQuestions);
   };
   
   const fastestFingerQuestion = getSelectedFastestFingerQuestion();
@@ -33,7 +46,7 @@ const ExportPanel: React.FC = () => {
           Export Questions
         </CardTitle>
         <CardDescription>
-          Select questions to include in your XML export.
+          Select questions to include in your export.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -52,14 +65,26 @@ const ExportPanel: React.FC = () => {
           </div>
         </div>
         
-        <Button 
-          onClick={handleExport} 
-          className="w-full"
-          disabled={totalSelected === 0}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export to XML
-        </Button>
+        <div className="space-y-3">
+          <Button 
+            onClick={handleExportXML} 
+            className="w-full"
+            disabled={totalSelected === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export to XML
+          </Button>
+          
+          <Button 
+            onClick={handleExportXLSX} 
+            className="w-full"
+            variant="outline"
+            disabled={totalSelected === 0}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Export to Excel
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

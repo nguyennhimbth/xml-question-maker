@@ -131,6 +131,7 @@ export const importXLSX = async (file: File, setQuestions: (questions: {
         const row = fastestData[i];
         if (!row || row.length < 6) continue; // Skip empty rows
         
+        const category = row[0]?.toString().trim() || 'Fastest Finger'; // Using Category instead of ID
         const questionText = row[1]?.toString().trim();
         if (!questionText) continue; // Skip rows without question text
         
