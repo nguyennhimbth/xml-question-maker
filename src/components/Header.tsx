@@ -15,7 +15,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, children }) => 
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
         <div className="mr-4">
-          <h1 className="font-bold">XML Question Maker</h1>
+          <h1 className="font-bold">Quiz Creator</h1>
         </div>
         
         <Tabs value={activeTab} onValueChange={onTabChange} className="ml-auto">
