@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { QuestionsProvider, useQuestions } from '@/context/QuestionsContext';
 import Header from '@/components/Header';
@@ -12,6 +11,7 @@ import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { TabsContent } from '@/components/ui/tabs';
+import SelectionBar from '@/components/SelectionBar';
 
 // Create an inner component that uses the context after the provider is set up
 const IndexContent = () => {
@@ -229,6 +229,7 @@ const IndexContent = () => {
           </div>
         )}
       </main>
+      <SelectionBar />
     </div>
   );
 };
