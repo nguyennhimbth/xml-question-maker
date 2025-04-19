@@ -16,6 +16,9 @@ const SelectionBar = () => {
   const selectedFastestCount = fastestFingerQuestions.filter(q => q.selected).length;
   const totalSelected = selectedRegularCount + selectedFastestCount;
 
+  // Check if there are any questions in the database, regardless of selection status
+  const hasQuestions = regularQuestions.length > 0 || fastestFingerQuestions.length > 0;
+
   const selectAll = () => {
     regularQuestions.forEach(q => {
       if (!q.selected) toggleRegularQuestionSelection(q.id);
@@ -34,13 +37,17 @@ const SelectionBar = () => {
     });
   };
 
-  if (totalSelected === 0) return null;
+  // Only display the bar if there are questions in the database
+  if (!hasQuestions) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg animate-slide-up">
       <div className="container mx-auto py-4 px-6 flex items-center justify-between">
         <div className="text-sm">
-          {totalSelected} question{totalSelected !== 1 ? 's' : ''} selected
+          {totalSelected === 0 ? 
+            "No questions selected" : 
+            `${totalSelected} question${totalSelected !== 1 ? 's' : ''} selected`
+          }
         </div>
         <div className="flex gap-2">
           <Button 
