@@ -1,83 +1,62 @@
 
-import React, { useState } from 'react';
-import { useQuestions } from '@/context/QuestionsContext';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { User, LogOut } from 'lucide-react';
+import AuthModal from './auth/AuthModal';
+import { toast } from 'sonner';
 
 const UserAccount: React.FC = () => {
-  const { currentUser, login, logout } = useQuestions();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [username, setUsername] = useState('');
+  const [session, setSession] = useState<any>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username.trim()) {
-      login(username.trim());
-      setIsLoginOpen(false);
-      setUsername('');
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error('Error signing out');
+    } else {
+      toast.success('Signed out successfully');
     }
   };
 
-  const handleLogout = () => {
-    logout();
-  };
-
   return (
-    <div className="flex items-center">
-      {currentUser && (
-        <div className="flex items-center">
-          <div className="mr-2 flex items-center">
+    <div className="flex items-center space-x-2">
+      {session?.user ? (
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center">
             <User className="mr-1 h-4 w-4" />
-            <span className="text-sm font-medium">{currentUser.name}</span>
+            <span className="text-sm font-medium">{session.user.email}</span>
           </div>
-          {currentUser.name !== 'Anonymous' && (
-            <Button variant="ghost" size="icon" onClick={handleLogout} title="Log out">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          )}
+          <Button variant="ghost" size="icon" onClick={handleLogout} title="Log out">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
-      )}
-      
-      {currentUser?.name === 'Anonymous' && (
-        <Button variant="ghost" size="sm" onClick={() => setIsLoginOpen(true)}>
+      ) : (
+        <Button variant="ghost" size="sm" onClick={() => setIsAuthModalOpen(true)}>
           Sign In
         </Button>
       )}
 
-      <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sign In</DialogTitle>
-            <DialogDescription>
-              Enter a username to save your questions.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={handleLogin}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsLoginOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Sign In</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </div>
   );
 };

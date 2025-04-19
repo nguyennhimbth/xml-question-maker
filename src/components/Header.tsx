@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileCode, HelpCircle } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import UserAccount from './UserAccount';
 
 interface HeaderProps {
@@ -14,13 +14,8 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, children }) => 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="mr-4 flex items-center">
-          <img 
-            src="/lovable-uploads/7fc22ca2-27a5-451a-8f6c-30ff2232452a.png" 
-            alt="Question Forge Studio" 
-            className="mr-2 h-8 w-8"
-          />
-          <h1 className="font-bold">Question Forge Studio</h1>
+        <div className="mr-4">
+          <h1 className="font-bold">Quiz Creator</h1>
         </div>
         
         <Tabs value={activeTab} onValueChange={onTabChange} className="ml-auto">
