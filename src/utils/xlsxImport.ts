@@ -1,4 +1,3 @@
-
 import { utils, read } from 'xlsx';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { v4 as uuidv4 } from 'uuid';
@@ -76,13 +75,33 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
         four: orderArray[3] as 'a' | 'b' | 'c' | 'd'
       },
       selected: false,
-      difficulty: 0
+      difficulty: 0 // Provide a default value to ensure it's always defined
     };
   });
   
+  // Fix the type predicate to match FastestFingerQuestion
   return questions.filter((q): q is FastestFingerQuestion => q !== null);
 };
 
+// Rename the function to importXLSX to match what ImportPanel.tsx is trying to import
+export const importXLSX = async (file: File, setQuestions: (questions: {
+  fastestFingerQuestion: FastestFingerQuestion | null;
+  regularQuestions: RegularQuestion[];
+}) => void): Promise<void> => {
+  try {
+    const result = await importFromExcel(file);
+    // Transform the result into the format expected by setQuestions
+    setQuestions({
+      fastestFingerQuestion: result.fastest.length > 0 ? result.fastest[0] : null,
+      regularQuestions: result.regular
+    });
+  } catch (error) {
+    console.error('Error importing XLSX:', error);
+    throw error;
+  }
+};
+
+// Keep the original function for backwards compatibility
 export const importFromExcel = async (file: File): Promise<{ regular: RegularQuestion[], fastest: FastestFingerQuestion[] }> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
