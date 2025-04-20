@@ -1,168 +1,108 @@
 
-import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { utils, read } from 'xlsx';
+import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { v4 as uuidv4 } from 'uuid';
 
-// Function to parse correct order from Excel format
-const parseCorrectOrder = (orderString: string): { one: 'a' | 'b' | 'c' | 'd'; two: 'a' | 'b' | 'c' | 'd'; three: 'a' | 'b' | 'c' | 'd'; four: 'a' | 'b' | 'c' | 'd' } | null => {
-  if (!orderString) return null;
+const processNormalSheet = (worksheet: any): RegularQuestion[] => {
+  const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
+  // Skip first row (header)
+  const questions = jsonData.slice(1).map((row: any) => {
+    if (!row || row.length < 6) return null; // Skip empty or invalid rows
+    
+    const [_, question, optionA, optionB, optionC, optionD, answer] = row;
+    
+    // Skip if essential data is missing
+    if (!question || !optionA || !optionB || !optionC || !optionD || !answer) return null;
+    
+    const normalizedAnswer = answer.toString().trim().toLowerCase();
+    
+    return {
+      id: uuidv4(),
+      category: 'Imported',
+      text: question,
+      answers: {
+        a: { text: optionA, correct: normalizedAnswer === 'a' },
+        b: { text: optionB, correct: normalizedAnswer === 'b' },
+        c: { text: optionC, correct: normalizedAnswer === 'c' },
+        d: { text: optionD, correct: normalizedAnswer === 'd' }
+      },
+      selected: false
+    };
+  });
   
-  // Remove any spaces
-  const cleaned = orderString.replace(/\s/g, '');
-  
-  // Handle different formats
-  let orderArray: string[] = [];
-  
-  // Handle ABCD format
-  if (/^[A-Da-d]{4}$/.test(cleaned)) {
-    orderArray = cleaned.toLowerCase().split('');
-  } 
-  // Handle A-B-C-D format
-  else if (/^[A-Da-d](-[A-Da-d]){3}$/.test(cleaned)) {
-    orderArray = cleaned.toLowerCase().split('-');
-  }
-  // Handle 1234 format (convert to abcd)
-  else if (/^[1-4]{4}$/.test(cleaned)) {
-    orderArray = cleaned.split('').map(num => {
-      switch (num) {
-        case '1': return 'a';
-        case '2': return 'b';
-        case '3': return 'c';
-        case '4': return 'd';
-        default: return 'a'; // Should never happen
-      }
-    });
-  }
-  // Handle 1-2-3-4 format (convert to abcd)
-  else if (/^[1-4](-[1-4]){3}$/.test(cleaned)) {
-    orderArray = cleaned.split('-').map(num => {
-      switch (num) {
-        case '1': return 'a';
-        case '2': return 'b';
-        case '3': return 'c';
-        case '4': return 'd';
-        default: return 'a'; // Should never happen
-      }
-    });
-  }
-  
-  // If we couldn't parse in any format, return null
-  if (orderArray.length !== 4) return null;
-  
-  // Validate all elements are valid answers
-  if (!orderArray.every(letter => ['a', 'b', 'c', 'd'].includes(letter))) return null;
-  
-  return {
-    one: orderArray[0] as 'a' | 'b' | 'c' | 'd',
-    two: orderArray[1] as 'a' | 'b' | 'c' | 'd',
-    three: orderArray[2] as 'a' | 'b' | 'c' | 'd',
-    four: orderArray[3] as 'a' | 'b' | 'c' | 'd'
-  };
+  return questions.filter((q): q is RegularQuestion => q !== null);
 };
 
-export const importXLSX = async (file: File, setQuestions: (questions: {
-  fastestFingerQuestion: FastestFingerQuestion | null;
-  regularQuestions: RegularQuestion[];
-}) => void) => {
-  try {
-    // Read the Excel file
-    const data = await file.arrayBuffer();
-    const workbook = read(data);
+const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
+  const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
+  // Skip first row (header)
+  const questions = jsonData.slice(1).map((row: any) => {
+    if (!row || row.length < 7) return null; // Skip empty or invalid rows
     
-    // Check if the required sheets exist
-    const normalSheetName = workbook.SheetNames.find(name => 
-      name.toUpperCase().includes('NORMAL') || name.includes('REGULAR') || name.includes('Question'));
+    const [_, question, optionA, optionB, optionC, optionD, correctOrder] = row;
     
-    const fastestSheetName = workbook.SheetNames.find(name => 
-      name.toUpperCase().includes('FASTEST') || name.includes('FINGER'));
+    // Skip if essential data is missing
+    if (!question || !optionA || !optionB || !optionC || !optionD || !correctOrder) return null;
     
-    if (!normalSheetName && !fastestSheetName) {
-      throw new Error('Could not find sheets with Normal Questions or Fastest Finger First questions');
-    }
+    // Process the correct order string
+    let orderArray = correctOrder.toString()
+      .toLowerCase()
+      .split(/[-\s]/)
+      .map((c: string) => {
+        if (c === '1' || c === 'a') return 'a';
+        if (c === '2' || c === 'b') return 'b';
+        if (c === '3' || c === 'c') return 'c';
+        if (c === '4' || c === 'd') return 'd';
+        return c;
+      })
+      .filter((c: string) => ['a', 'b', 'c', 'd'].includes(c));
     
-    const regularQuestions: RegularQuestion[] = [];
-    let fastestFingerQuestion: FastestFingerQuestion | null = null;
+    // Ensure we have exactly 4 valid options
+    if (orderArray.length !== 4) return null;
     
-    // Process Regular Questions
-    if (normalSheetName) {
-      const normalSheet = workbook.Sheets[normalSheetName];
-      const normalData = utils.sheet_to_json<any>(normalSheet, { header: 1 });
-      
-      // Skip first two rows (header rows)
-      for (let i = 2; i < normalData.length; i++) {
-        const row = normalData[i];
-        if (!row || row.length < 7) continue; // Skip empty rows
+    return {
+      id: uuidv4(),
+      text: question,
+      answers: {
+        a: optionA,
+        b: optionB,
+        c: optionC,
+        d: optionD
+      },
+      correctOrder: {
+        one: orderArray[0] as 'a' | 'b' | 'c' | 'd',
+        two: orderArray[1] as 'a' | 'b' | 'c' | 'd',
+        three: orderArray[2] as 'a' | 'b' | 'c' | 'd',
+        four: orderArray[3] as 'a' | 'b' | 'c' | 'd'
+      },
+      selected: false,
+      difficulty: 0
+    };
+  });
+  
+  return questions.filter((q): q is FastestFingerQuestion => q !== null);
+};
+
+export const importFromExcel = async (file: File): Promise<{ regular: RegularQuestion[], fastest: FastestFingerQuestion[] }> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = read(data, { type: 'binary' });
         
-        const category = row[0]?.toString().trim() || 'Imported';
-        const questionText = row[1]?.toString().trim();
-        if (!questionText) continue; // Skip rows without question text
+        const regularSheet = workbook.Sheets['NORMAL'];
+        const fastestSheet = workbook.Sheets['FASTEST FINGER FIRST'];
         
-        const optionA = row[2]?.toString().trim() || '';
-        const optionB = row[3]?.toString().trim() || '';
-        const optionC = row[4]?.toString().trim() || '';
-        const optionD = row[5]?.toString().trim() || '';
-        const correctAnswer = row[6]?.toString().trim().toUpperCase() || '';
+        const regular = regularSheet ? processNormalSheet(regularSheet) : [];
+        const fastest = fastestSheet ? processFFSheet(fastestSheet) : [];
         
-        // Only add valid questions
-        if (questionText && (optionA || optionB || optionC || optionD)) {
-          regularQuestions.push({
-            id: uuidv4(),
-            category: category,
-            text: questionText,
-            answers: {
-              a: { text: optionA, correct: correctAnswer === 'A' },
-              b: { text: optionB, correct: correctAnswer === 'B' },
-              c: { text: optionC, correct: correctAnswer === 'C' },
-              d: { text: optionD, correct: correctAnswer === 'D' },
-            },
-            selected: false
-          });
-        }
+        resolve({ regular, fastest });
+      } catch (error) {
+        reject(error);
       }
-    }
-    
-    // Process Fastest Finger First Questions
-    if (fastestSheetName) {
-      const fastestSheet = workbook.Sheets[fastestSheetName];
-      const fastestData = utils.sheet_to_json<any>(fastestSheet, { header: 1 });
-      
-      // Skip first two rows (header rows)
-      for (let i = 2; i < fastestData.length; i++) {
-        const row = fastestData[i];
-        if (!row || row.length < 6) continue; // Skip empty rows
-        
-        const category = row[0]?.toString().trim() || 'Fastest Finger'; // Using Category instead of ID
-        const questionText = row[1]?.toString().trim();
-        if (!questionText) continue; // Skip rows without question text
-        
-        const optionA = row[2]?.toString().trim() || '';
-        const optionB = row[3]?.toString().trim() || '';
-        const optionC = row[4]?.toString().trim() || '';
-        const optionD = row[5]?.toString().trim() || '';
-        const correctOrderString = row[6]?.toString().trim() || '';
-        
-        const correctOrder = parseCorrectOrder(correctOrderString);
-        
-        // Only add valid fastest finger questions
-        if (questionText && optionA && optionB && optionC && optionD && correctOrder) {
-          fastestFingerQuestion = {
-            id: uuidv4(),
-            text: questionText,
-            answers: { a: optionA, b: optionB, c: optionC, d: optionD },
-            correctOrder,
-            selected: true, // Auto-select the imported fastest finger question
-            difficulty: 0
-          };
-          break; // Only take the first valid fastest finger question
-        }
-      }
-    }
-    
-    // Update the questions in the app
-    setQuestions({ fastestFingerQuestion, regularQuestions });
-    
-  } catch (error) {
-    console.error('Error importing XLSX:', error);
-    throw error;
-  }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsBinaryString(file);
+  });
 };
