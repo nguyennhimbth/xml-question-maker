@@ -1,3 +1,4 @@
+
 import { utils, read } from 'xlsx';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { v4 as uuidv4 } from 'uuid';
@@ -31,6 +32,9 @@ const processNormalSheet = (worksheet: any): RegularQuestion[] => {
   
   return questions.filter((q): q is RegularQuestion => q !== null);
 };
+
+// Define a type that matches what we're actually creating in processFFSheet
+type FFQuestionWithRequiredDifficulty = Omit<FastestFingerQuestion, 'difficulty'> & { difficulty: number };
 
 const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
   const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
@@ -75,15 +79,15 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
         four: orderArray[3] as 'a' | 'b' | 'c' | 'd'
       },
       selected: false,
-      difficulty: 0 // Provide a default value to ensure it's always defined
+      difficulty: 0 // We always set a default value
     };
   });
   
-  // Fix the type predicate to match FastestFingerQuestion
-  return questions.filter((q): q is FastestFingerQuestion => q !== null);
+  // Use our intermediate type for the type predicate, then cast the result
+  return questions.filter((q): q is FFQuestionWithRequiredDifficulty => q !== null) as FastestFingerQuestion[];
 };
 
-// Rename the function to importXLSX to match what ImportPanel.tsx is trying to import
+// Export function to match what ImportPanel.tsx is trying to import
 export const importXLSX = async (file: File, setQuestions: (questions: {
   fastestFingerQuestion: FastestFingerQuestion | null;
   regularQuestions: RegularQuestion[];
