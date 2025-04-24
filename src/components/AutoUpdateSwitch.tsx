@@ -14,7 +14,7 @@ const AutoUpdateSwitch = () => {
         checked={autoUpdate}
         onCheckedChange={toggleAutoUpdate}
       />
-      <Label htmlFor="auto-update">Auto-update questions every 10 minutes</Label>
+      <Label htmlFor="auto-update">Auto-update</Label>
     </div>
   );
 };
