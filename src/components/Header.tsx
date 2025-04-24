@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HelpCircle } from 'lucide-react';
 import UserAccount from './UserAccount';
+import AutoUpdateSwitch from './AutoUpdateSwitch';
 
 interface HeaderProps {
   activeTab: string;
@@ -27,7 +28,8 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, children }) => 
           {children}
         </Tabs>
         
-        <div className="ml-4 flex items-center space-x-2">
+        <div className="ml-4 flex items-center space-x-4">
+          <AutoUpdateSwitch />
           <UserAccount />
           
           <a 

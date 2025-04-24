@@ -29,6 +29,8 @@ interface QuestionsContextType {
   currentUser: User | null;
   login: (name: string) => void;
   logout: () => void;
+  autoUpdate: boolean;
+  toggleAutoUpdate: () => void;
 }
 
 // Generate a unique session ID for anonymous users
@@ -73,133 +75,88 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Sync to Supabase when questions change
+  const [autoUpdate, setAutoUpdate] = useState(false);
+  
+  // Function to sync questions with Supabase
+  const syncQuestions = async () => {
+    if (!currentUser) return;
+    
+    try {
+      // Sync fastest finger questions
+      fastestFingerQuestions.forEach(async (question) => {
+        try {
+          await supabase
+            .from('fastest_finger_questions')
+            .upsert({
+              id: question.id,
+              user_id: currentUser.id,
+              question: question.text,
+              option_a: question.answers.a,
+              option_b: question.answers.b,
+              option_c: question.answers.c,
+              option_d: question.answers.d,
+              correct_order: `${question.correctOrder.one}${question.correctOrder.two}${question.correctOrder.three}${question.correctOrder.four}`,
+              category: 'Default'
+            });
+        } catch (error) {
+          console.error('Error syncing fastest finger question:', error);
+          toast.error('Failed to sync a fastest finger question');
+        }
+      });
+
+      // Sync regular questions
+      regularQuestions.forEach(async (question) => {
+        try {
+          const correctLetter = Object.entries(question.answers)
+            .find(([_, answer]) => answer.correct)?.[0];
+            
+          await supabase
+            .from('regular_questions')
+            .upsert({
+              id: question.id,
+              user_id: currentUser.id,
+              category: question.category,
+              question: question.text,
+              option_a: question.answers.a.text,
+              option_b: question.answers.b.text,
+              option_c: question.answers.c.text,
+              option_d: question.answers.d.text,
+              correct_answer: correctLetter
+            });
+        } catch (error) {
+          console.error('Error syncing regular question:', error);
+          toast.error('Failed to sync a regular question');
+        }
+      });
+
+      toast.success('Questions synced successfully');
+    } catch (error) {
+      console.error('Error in sync operation:', error);
+      toast.error('Failed to sync questions');
+    }
+  };
+
+  // Auto-update effect
   useEffect(() => {
-    const syncFastestFingerQuestion = async (question: FastestFingerQuestion) => {
-      if (!currentUser) return;
-      
-      try {
-        await supabase
-          .from('fastest_finger_questions')
-          .upsert({
-            id: question.id,
-            user_id: currentUser.id,
-            question: question.text,
-            option_a: question.answers.a,
-            option_b: question.answers.b,
-            option_c: question.answers.c,
-            option_d: question.answers.d,
-            correct_order: `${question.correctOrder.one}${question.correctOrder.two}${question.correctOrder.three}${question.correctOrder.four}`,
-            category: 'Default'
-          });
-      } catch (error) {
-        console.error('Error syncing fastest finger question:', error);
-        toast.error('Failed to sync fastest finger question');
-      }
-    };
+    if (!autoUpdate) return;
 
-    const syncRegularQuestion = async (question: RegularQuestion) => {
-      if (!currentUser) return;
-      
-      try {
-        const correctLetter = Object.entries(question.answers)
-          .find(([_, answer]) => answer.correct)?.[0];
-          
-        await supabase
-          .from('regular_questions')
-          .upsert({
-            id: question.id,
-            user_id: currentUser.id,
-            category: question.category,
-            question: question.text,
-            option_a: question.answers.a.text,
-            option_b: question.answers.b.text,
-            option_c: question.answers.c.text,
-            option_d: question.answers.d.text,
-            correct_answer: correctLetter
-          });
-      } catch (error) {
-        console.error('Error syncing regular question:', error);
-        toast.error('Failed to sync regular question');
-      }
-    };
+    // Initial sync
+    syncQuestions();
 
-    // Sync fastest finger questions
-    fastestFingerQuestions.forEach(question => {
-      syncFastestFingerQuestion(question);
-    });
+    // Set up interval for auto-update
+    const interval = setInterval(syncQuestions, 10 * 60 * 1000); // 10 minutes
 
-    // Sync regular questions
-    regularQuestions.forEach(question => {
-      syncRegularQuestion(question);
-    });
-  }, [fastestFingerQuestions, regularQuestions, currentUser]);
+    return () => clearInterval(interval);
+  }, [autoUpdate, fastestFingerQuestions, regularQuestions, currentUser]);
 
-  // Load questions from Supabase when user changes
-  useEffect(() => {
-    const loadQuestions = async () => {
-      if (!currentUser) return;
-
-      try {
-        // Load fastest finger questions
-        const { data: ffData, error: ffError } = await supabase
-          .from('fastest_finger_questions')
-          .select('*')
-          .eq('user_id', currentUser.id);
-
-        if (ffError) throw ffError;
-
-        const fastestFingerQuestions: FastestFingerQuestion[] = ffData.map(row => ({
-          id: row.id,
-          text: row.question,
-          answers: {
-            a: row.option_a,
-            b: row.option_b,
-            c: row.option_c,
-            d: row.option_d
-          },
-          correctOrder: {
-            one: row.correct_order[0] as 'a'|'b'|'c'|'d',
-            two: row.correct_order[1] as 'a'|'b'|'c'|'d',
-            three: row.correct_order[2] as 'a'|'b'|'c'|'d',
-            four: row.correct_order[3] as 'a'|'b'|'c'|'d'
-          },
-          selected: false,
-          difficulty: 0
-        }));
-
-        // Load regular questions
-        const { data: regData, error: regError } = await supabase
-          .from('regular_questions')
-          .select('*')
-          .eq('user_id', currentUser.id);
-
-        if (regError) throw regError;
-
-        const regularQuestions: RegularQuestion[] = regData.map(row => ({
-          id: row.id,
-          category: row.category || '',
-          text: row.question,
-          answers: {
-            a: { text: row.option_a, correct: row.correct_answer === 'a' },
-            b: { text: row.option_b, correct: row.correct_answer === 'b' },
-            c: { text: row.option_c, correct: row.correct_answer === 'c' },
-            d: { text: row.option_d, correct: row.correct_answer === 'd' }
-          },
-          selected: false
-        }));
-
-        setFastestFingerQuestions(fastestFingerQuestions);
-        setRegularQuestions(regularQuestions);
-        
-      } catch (error) {
-        console.error('Error loading questions:', error);
-        toast.error('Failed to load questions');
-      }
-    };
-
-    loadQuestions();
-  }, [currentUser]);
+  const toggleAutoUpdate = () => {
+    setAutoUpdate(prev => !prev);
+    if (!autoUpdate) {
+      toast.success('Auto-update enabled - questions will sync every 10 minutes');
+    } else {
+      toast.info('Auto-update disabled');
+    }
+  };
 
   // Save to database (localStorage) whenever the user or questions change
   useEffect(() => {
@@ -346,6 +303,8 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       currentUser,
       login,
       logout,
+      autoUpdate,
+      toggleAutoUpdate,
     }}>
       {children}
     </QuestionsContext.Provider>
