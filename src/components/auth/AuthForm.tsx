@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuestions } from '@/context/QuestionsContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -14,6 +14,8 @@ const AuthForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,16 +72,39 @@ const AuthForm = () => {
         {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
       </Button>
 
-      <p className="text-center text-sm">
-        {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
-        <button
-          type="button"
-          onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-          className="text-primary hover:underline"
-        >
-          {mode === 'signin' ? 'Sign Up' : 'Sign In'}
-        </button>
-      </p>
+      <div className="text-center text-sm">
+        {mode === 'signin' ? (
+          <>
+            <button
+              type="button"
+              onClick={() => navigate('/reset-password')}
+              className="text-primary hover:underline"
+            >
+              Forgot Password?
+            </button>
+            <br />
+            {"Don't have an account? "}
+            <button
+              type="button"
+              onClick={() => setMode('signup')}
+              className="text-primary hover:underline"
+            >
+              Sign Up
+            </button>
+          </>
+        ) : (
+          <>
+            {"Already have an account? "}
+            <button
+              type="button"
+              onClick={() => setMode('signin')}
+              className="text-primary hover:underline"
+            >
+              Sign In
+            </button>
+          </>
+        )}
+      </div>
     </form>
   );
 };
