@@ -29,8 +29,6 @@ interface QuestionsContextType {
   currentUser: User | null;
   login: (name: string) => void;
   logout: () => void;
-  autoUpdate: boolean;
-  toggleAutoUpdate: () => void;
 }
 
 // Generate a unique session ID for anonymous users
@@ -75,8 +73,6 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [autoUpdate, setAutoUpdate] = useState(false);
-  
   // Function to sync questions with Supabase
   const syncQuestions = async () => {
     if (!currentUser) return;
@@ -128,54 +124,115 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           toast.error('Failed to sync a regular question');
         }
       });
-
-      toast.success('Questions synced successfully');
     } catch (error) {
       console.error('Error in sync operation:', error);
       toast.error('Failed to sync questions');
     }
   };
 
-  // Auto-update effect
-  useEffect(() => {
-    if (!autoUpdate) return;
-
-    // Initial sync
-    syncQuestions();
-
-    // Set up interval for auto-update
-    const interval = setInterval(syncQuestions, 10 * 60 * 1000); // 10 minutes
-
-    return () => clearInterval(interval);
-  }, [autoUpdate, fastestFingerQuestions, regularQuestions, currentUser]);
-
-  const toggleAutoUpdate = () => {
-    setAutoUpdate(prev => !prev);
-    if (!autoUpdate) {
-      toast.success('Auto-update enabled - questions will sync every 10 minutes');
-    } else {
-      toast.info('Auto-update disabled');
-    }
+  // Question management functions with immediate sync
+  const addFastestFingerQuestion = (question: FastestFingerQuestion) => {
+    setFastestFingerQuestions(prev => {
+      const updated = [...prev, question];
+      syncQuestions(); // Sync after update
+      return updated;
+    });
   };
 
-  // Save to database (localStorage) whenever the user or questions change
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('qfs_current_user', JSON.stringify(currentUser));
-    }
-  }, [currentUser]);
-  
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`qfs_fastest_finger_${currentUser.id}`, JSON.stringify(fastestFingerQuestions));
-    }
-  }, [fastestFingerQuestions, currentUser]);
+  const addRegularQuestion = (question: RegularQuestion) => {
+    setRegularQuestions(prev => {
+      const updated = [...prev, question];
+      syncQuestions(); // Sync after update
+      return updated;
+    });
+  };
 
-  useEffect(() => {
+  const deleteFastestFingerQuestion = async (id: string) => {
     if (currentUser) {
-      localStorage.setItem(`qfs_regular_questions_${currentUser.id}`, JSON.stringify(regularQuestions));
+      try {
+        await supabase
+          .from('fastest_finger_questions')
+          .delete()
+          .eq('id', id);
+      } catch (error) {
+        console.error('Error deleting fastest finger question:', error);
+        toast.error('Failed to delete question');
+        return;
+      }
     }
-  }, [regularQuestions, currentUser]);
+    
+    setFastestFingerQuestions(prev => prev.filter(q => q.id !== id));
+  };
+
+  const deleteRegularQuestion = async (id: string) => {
+    if (currentUser) {
+      try {
+        await supabase
+          .from('regular_questions')
+          .delete()
+          .eq('id', id);
+      } catch (error) {
+        console.error('Error deleting regular question:', error);
+        toast.error('Failed to delete question');
+        return;
+      }
+    }
+    
+    setRegularQuestions(prev => prev.filter(q => q.id !== id));
+  };
+
+  const updateFastestFingerQuestion = (id: string, updatedQuestion: Partial<FastestFingerQuestion>) => {
+    setFastestFingerQuestions(prev => {
+      const updated = prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q);
+      syncQuestions(); // Sync after update
+      return updated;
+    });
+  };
+
+  const updateRegularQuestion = (id: string, updatedQuestion: Partial<RegularQuestion>) => {
+    setRegularQuestions(prev => {
+      const updated = prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q);
+      syncQuestions(); // Sync after update
+      return updated;
+    });
+  };
+
+  const toggleFastestFingerQuestionSelection = (id: string) => {
+    setFastestFingerQuestions(prev => {
+      // Only one fastest finger question can be selected
+      const newQuestions = prev.map(q => ({
+        ...q,
+        selected: q.id === id // Only the clicked one is selected
+      }));
+      return newQuestions;
+    });
+  };
+
+  const toggleRegularQuestionSelection = (id: string) => {
+    setRegularQuestions(prev => 
+      prev.map(q => q.id === id ? { ...q, selected: !q.selected } : q)
+    );
+  };
+
+  const getSelectedFastestFingerQuestion = (): FastestFingerQuestion | null => {
+    return fastestFingerQuestions.find(q => q.selected) || null;
+  };
+
+  const getSelectedRegularQuestions = (): RegularQuestion[] => {
+    return regularQuestions.filter(q => q.selected);
+  };
+
+  const setQuestions = ({ fastestFingerQuestion, regularQuestions }: {
+    fastestFingerQuestion: FastestFingerQuestion | null;
+    regularQuestions: RegularQuestion[];
+  }) => {
+    if (fastestFingerQuestion) {
+      setFastestFingerQuestions([fastestFingerQuestion]);
+    } else {
+      setFastestFingerQuestions([]);
+    }
+    setRegularQuestions(regularQuestions);
+  };
 
   // User management functions
   const login = (name: string) => {
@@ -219,72 +276,6 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Question management functions
-  const addFastestFingerQuestion = (question: FastestFingerQuestion) => {
-    setFastestFingerQuestions(prev => [...prev, question]);
-  };
-
-  const addRegularQuestion = (question: RegularQuestion) => {
-    setRegularQuestions(prev => [...prev, question]);
-  };
-
-  const updateFastestFingerQuestion = (id: string, updatedQuestion: Partial<FastestFingerQuestion>) => {
-    setFastestFingerQuestions(prev => 
-      prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
-    );
-  };
-
-  const updateRegularQuestion = (id: string, updatedQuestion: Partial<RegularQuestion>) => {
-    setRegularQuestions(prev => 
-      prev.map(q => q.id === id ? { ...q, ...updatedQuestion } : q)
-    );
-  };
-
-  const deleteFastestFingerQuestion = (id: string) => {
-    setFastestFingerQuestions(prev => prev.filter(q => q.id !== id));
-  };
-
-  const deleteRegularQuestion = (id: string) => {
-    setRegularQuestions(prev => prev.filter(q => q.id !== id));
-  };
-
-  const toggleFastestFingerQuestionSelection = (id: string) => {
-    setFastestFingerQuestions(prev => {
-      // Only one fastest finger question can be selected
-      const newQuestions = prev.map(q => ({
-        ...q,
-        selected: q.id === id // Only the clicked one is selected
-      }));
-      return newQuestions;
-    });
-  };
-
-  const toggleRegularQuestionSelection = (id: string) => {
-    setRegularQuestions(prev => 
-      prev.map(q => q.id === id ? { ...q, selected: !q.selected } : q)
-    );
-  };
-
-  const getSelectedFastestFingerQuestion = (): FastestFingerQuestion | null => {
-    return fastestFingerQuestions.find(q => q.selected) || null;
-  };
-
-  const getSelectedRegularQuestions = (): RegularQuestion[] => {
-    return regularQuestions.filter(q => q.selected);
-  };
-
-  const setQuestions = ({ fastestFingerQuestion, regularQuestions }: {
-    fastestFingerQuestion: FastestFingerQuestion | null;
-    regularQuestions: RegularQuestion[];
-  }) => {
-    if (fastestFingerQuestion) {
-      setFastestFingerQuestions([fastestFingerQuestion]);
-    } else {
-      setFastestFingerQuestions([]);
-    }
-    setRegularQuestions(regularQuestions);
-  };
-
   return (
     <QuestionsContext.Provider value={{
       fastestFingerQuestions,
@@ -303,8 +294,6 @@ export const QuestionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       currentUser,
       login,
       logout,
-      autoUpdate,
-      toggleAutoUpdate,
     }}>
       {children}
     </QuestionsContext.Provider>
