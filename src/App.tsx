@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PasswordReset from "./pages/PasswordReset";
 import UpdatePassword from "./pages/UpdatePassword";
+import Address from "./pages/Address";  // Add this import
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/reset-password" element={<PasswordReset />} />
           <Route path="/update-password" element={<UpdatePassword />} />
+          <Route path="/address" element={<Address />} />  {/* Add this route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
