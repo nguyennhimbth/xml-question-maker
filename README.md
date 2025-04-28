@@ -1,5 +1,5 @@
 
-# Question Forge Studio
+# XML Question Maker
 
 A comprehensive application for creating, managing, and exporting quiz questions in XML format. Question Forge Studio supports two types of questions:
 
