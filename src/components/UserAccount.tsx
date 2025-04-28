@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import {
 
 const UserAccount: React.FC = () => {
   const [session, setSession] = useState<any>(null);
+  const [nickname, setNickname] = useState<string>('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -23,6 +25,9 @@ const UserAccount: React.FC = () => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user?.user_metadata?.nickname) {
+        setNickname(session.user.user_metadata.nickname);
+      }
     });
 
     // Listen for auth changes
@@ -30,6 +35,9 @@ const UserAccount: React.FC = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user?.user_metadata?.nickname) {
+        setNickname(session.user.user_metadata.nickname);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -54,7 +62,7 @@ const UserAccount: React.FC = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{nickname || 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled className="text-sm">
               {session.user.email}
