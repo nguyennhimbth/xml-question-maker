@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuestions } from '@/context/QuestionsContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -75,14 +76,6 @@ const AuthForm = () => {
       <div className="text-center text-sm">
         {mode === 'signin' ? (
           <>
-            <button
-              type="button"
-              onClick={() => navigate('/reset-password')}
-              className="text-primary hover:underline"
-            >
-              Forgot Password?
-            </button>
-            <br />
             {"Don't have an account? "}
             <button
               type="button"

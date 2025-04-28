@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 const Settings = () => {
   const [nickname, setNickname] = useState('');
@@ -65,7 +65,17 @@ const Settings = () => {
 
   return (
     <div className="container max-w-md mx-auto mt-10 p-6">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+      <div className="flex items-center mb-6">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate('/')}
+          className="mr-4"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-2xl font-bold">Settings</h1>
+      </div>
       
       <div className="space-y-6">
         {/* Nickname Section */}
