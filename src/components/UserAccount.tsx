@@ -22,21 +22,19 @@ const UserAccount: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user?.user_metadata?.nickname) {
-        setNickname(session.user.user_metadata.nickname);
+    // Set up auth state listener FIRST to prevent missing auth events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      if (currentSession?.user?.user_metadata?.nickname) {
+        setNickname(currentSession.user.user_metadata.nickname);
       }
     });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user?.user_metadata?.nickname) {
-        setNickname(session.user.user_metadata.nickname);
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      if (currentSession?.user?.user_metadata?.nickname) {
+        setNickname(currentSession.user.user_metadata.nickname);
       }
     });
 

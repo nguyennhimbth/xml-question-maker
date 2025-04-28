@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,21 +22,16 @@ const Settings = () => {
         navigate('/');
         return;
       }
+      
+      // Load user nickname if available
+      if (session?.user?.user_metadata?.nickname) {
+        setNickname(session.user.user_metadata.nickname);
+      }
     });
 
     // Load current theme
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
-
-    // Load user nickname if available
-    const loadUserProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.user_metadata?.nickname) {
-        setNickname(user.user_metadata.nickname);
-      }
-    };
-    
-    loadUserProfile();
   }, [navigate]);
 
   const handleThemeToggle = (checked: boolean) => {
@@ -63,13 +59,17 @@ const Settings = () => {
     }
   };
 
+  const handleGoBack = () => {
+    navigate('/');
+  };
+
   return (
     <div className="container max-w-md mx-auto mt-10 p-6">
       <div className="flex items-center mb-6">
         <Button 
           variant="ghost" 
           size="icon"
-          onClick={() => navigate('/')}
+          onClick={handleGoBack}
           className="mr-4"
         >
           <ArrowLeft className="h-4 w-4" />
