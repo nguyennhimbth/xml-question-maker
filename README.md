@@ -1,7 +1,7 @@
 
 # XML Question Maker
 
-A comprehensive application for creating, managing, and exporting quiz questions in XML format. Question Forge Studio supports two types of questions:
+A comprehensive application for creating, managing, and exporting quiz questions in XML format. XML Question Maker supports two types of questions:
 
 1. **Fastest Finger First Questions**: These questions ask contestants to arrange four items in a specific order.
 2. **Regular Questions**: Standard multiple-choice questions with one correct answer.
@@ -72,8 +72,7 @@ The exported XML follows this structure:
 
 ## Getting Started (Use Instantly) (Can't save your question for a long time)
 
-Go to https://question-forge-studio.lovable.app/
-
+Go to https://xml-question-maker.lovable.app/
 ## Getting Started (For local use)
 
 1. Clone this repository
