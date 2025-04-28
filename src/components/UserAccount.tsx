@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { User, LogOut, Settings } from 'lucide-react';
 import AuthModal from './auth/AuthModal';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,7 @@ import {
 const UserAccount: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Get initial session
@@ -58,7 +59,7 @@ const UserAccount: React.FC = () => {
             <DropdownMenuItem disabled className="text-sm">
               {session.user.email}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
