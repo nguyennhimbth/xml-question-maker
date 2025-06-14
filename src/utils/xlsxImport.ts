@@ -25,7 +25,7 @@ const processNormalSheet = (worksheet: any): RegularQuestion[] => {
   const questions = limitedRows.map((row: any) => {
     if (!row || row.length < 7) return null; // Need at least 7 columns
     
-    const [_, question, optionA, optionB, optionC, optionD, answer] = row;
+    const [_, question, optionA, optionB, optionC, optionD, answer, difficulty] = row;
     
     // Skip if essential data is missing
     if (!question || !optionA || !optionB || !optionC || !optionD || !answer) return null;
@@ -44,6 +44,15 @@ const processNormalSheet = (worksheet: any): RegularQuestion[] => {
     // Validate answer is one of the valid options
     if (!['a', 'b', 'c', 'd'].includes(normalizedAnswer)) return null;
     
+    // Parse difficulty level (default to Easy if not provided or invalid)
+    let difficultyLevel: 1 | 2 | 3 = 1;
+    if (difficulty) {
+      const difficultyNum = parseInt(String(difficulty).trim());
+      if ([1, 2, 3].includes(difficultyNum)) {
+        difficultyLevel = difficultyNum as 1 | 2 | 3;
+      }
+    }
+    
     return {
       id: uuidv4(),
       category: 'Imported',
@@ -54,14 +63,13 @@ const processNormalSheet = (worksheet: any): RegularQuestion[] => {
         c: { text: sanitizedC, correct: normalizedAnswer === 'c' },
         d: { text: sanitizedD, correct: normalizedAnswer === 'd' }
       },
-      selected: false
+      selected: false,
+      difficulty: difficultyLevel
     };
   });
   
   return questions.filter((q): q is RegularQuestion => q !== null);
 };
-
-type FFQuestionWithRequiredDifficulty = Omit<FastestFingerQuestion, 'difficulty'> & { difficulty: number };
 
 const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
   const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
@@ -76,7 +84,7 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
   const questions = limitedRows.map((row: any) => {
     if (!row || row.length < 7) return null; // Need at least 7 columns
     
-    const [_, question, optionA, optionB, optionC, optionD, correctOrder] = row;
+    const [_, question, optionA, optionB, optionC, optionD, correctOrder, difficulty] = row;
     
     // Skip if essential data is missing
     if (!question || !optionA || !optionB || !optionC || !optionD || !correctOrder) return null;
@@ -118,6 +126,15 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
     // Ensure we have exactly 4 valid options and no duplicates
     if (orderArray.length !== 4 || new Set(orderArray).size !== 4) return null;
     
+    // Parse difficulty level (default to Easy if not provided or invalid)
+    let difficultyLevel: 1 | 2 | 3 = 1;
+    if (difficulty) {
+      const difficultyNum = parseInt(String(difficulty).trim());
+      if ([1, 2, 3].includes(difficultyNum)) {
+        difficultyLevel = difficultyNum as 1 | 2 | 3;
+      }
+    }
+    
     return {
       id: uuidv4(),
       text: sanitizedQuestion,
@@ -134,11 +151,11 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
         four: orderArray[3] as 'a' | 'b' | 'c' | 'd'
       },
       selected: false,
-      difficulty: 0
+      difficulty: difficultyLevel
     };
   });
   
-  return questions.filter((q): q is FFQuestionWithRequiredDifficulty => q !== null) as FastestFingerQuestion[];
+  return questions.filter((q): q is FastestFingerQuestion => q !== null);
 };
 
 export const importXLSX = async (file: File, setQuestions: (questions: {

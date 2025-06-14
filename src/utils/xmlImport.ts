@@ -42,8 +42,16 @@ const parseXML = (xmlString: string): {
     const two = fastestNode.querySelector('correctOrder two')?.textContent?.toLowerCase().trim() as 'a' | 'b' | 'c' | 'd' || 'b';
     const three = fastestNode.querySelector('correctOrder three')?.textContent?.toLowerCase().trim() as 'a' | 'b' | 'c' | 'd' || 'c';
     const four = fastestNode.querySelector('correctOrder four')?.textContent?.toLowerCase().trim() as 'a' | 'b' | 'c' | 'd' || 'd';
+    
+    // Parse difficulty attribute
     const difficultyStr = fastestNode.getAttribute('difficulty');
-    const difficulty = difficultyStr ? Math.max(0, Math.min(10, Number(difficultyStr))) : 0; // Clamp between 0-10
+    let difficulty: 1 | 2 | 3 = 1;
+    if (difficultyStr) {
+      const difficultyNum = parseInt(difficultyStr);
+      if ([1, 2, 3].includes(difficultyNum)) {
+        difficulty = difficultyNum as 1 | 2 | 3;
+      }
+    }
 
     // Validate required fields
     if (text && a && b && c && d && ['a', 'b', 'c', 'd'].includes(one) && 
@@ -71,6 +79,16 @@ const parseXML = (xmlString: string): {
   limitedNodes.forEach((node) => {
     const text = sanitizeText(node.querySelector('text')?.textContent?.trim() || '');
     const category = sanitizeText(node.querySelector('category')?.textContent?.trim() || 'Imported');
+    
+    // Parse difficulty attribute
+    const difficultyStr = node.getAttribute('difficulty');
+    let difficulty: 1 | 2 | 3 = 1;
+    if (difficultyStr) {
+      const difficultyNum = parseInt(difficultyStr);
+      if ([1, 2, 3].includes(difficultyNum)) {
+        difficulty = difficultyNum as 1 | 2 | 3;
+      }
+    }
     
     if (text) {
       const a = node.querySelector('a');
@@ -103,6 +121,7 @@ const parseXML = (xmlString: string): {
             },
           },
           selected: false,
+          difficulty
         });
       }
     }
