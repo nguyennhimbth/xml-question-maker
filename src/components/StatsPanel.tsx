@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { useQuestions } from '@/context/QuestionsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Plus, FileText, Upload, Target, Folder } from 'lucide-react';
+import { FileText, Target, Folder, TrendingUp } from 'lucide-react';
 
 const StatsPanel = () => {
   const { fastestFingerQuestions, regularQuestions } = useQuestions();
@@ -19,9 +20,11 @@ const StatsPanel = () => {
     count: regularQuestions.filter(q => q.category === category).length
   }));
 
-  // Calculate imported vs manual (assuming imported questions have "Imported" category)
-  const importedQuestions = regularQuestions.filter(q => q.category === 'Imported').length;
-  const manualQuestions = totalQuestions - importedQuestions;
+  // Calculate difficulty stats for all questions
+  const allQuestions = [...fastestFingerQuestions, ...regularQuestions];
+  const easyCount = allQuestions.filter(q => q.difficulty === 1).length;
+  const mediumCount = allQuestions.filter(q => q.difficulty === 2).length;
+  const hardCount = allQuestions.filter(q => q.difficulty === 3).length;
 
   // Data for charts
   const questionTypeData = [
@@ -29,10 +32,16 @@ const StatsPanel = () => {
     { name: 'Regular Questions', count: totalRegular, color: '#82ca9d' }
   ];
 
-  const creationMethodData = [
-    { name: 'Manual', count: manualQuestions, color: '#ffc658' },
-    { name: 'Imported', count: importedQuestions, color: '#ff7c7c' }
+  const difficultyData = [
+    { name: 'Easy', count: easyCount, color: '#22c55e' },
+    { name: 'Medium', count: mediumCount, color: '#eab308' },
+    { name: 'Hard', count: hardCount, color: '#ef4444' }
   ];
+
+  // Calculate difficulty breakdown for regular questions only
+  const regularEasyCount = regularQuestions.filter(q => q.difficulty === 1).length;
+  const regularMediumCount = regularQuestions.filter(q => q.difficulty === 2).length;
+  const regularHardCount = regularQuestions.filter(q => q.difficulty === 3).length;
 
   return (
     <div className="space-y-6">
@@ -50,31 +59,31 @@ const StatsPanel = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categories</CardTitle>
-            <Folder className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Easy Questions</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{categories.length}</div>
+            <div className="text-2xl font-bold text-green-600">{easyCount}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Manual Created</CardTitle>
-            <Plus className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Medium Questions</CardTitle>
+            <TrendingUp className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{manualQuestions}</div>
+            <div className="text-2xl font-bold text-yellow-600">{mediumCount}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Imported</CardTitle>
-            <Upload className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Hard Questions</CardTitle>
+            <TrendingUp className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{importedQuestions}</div>
+            <div className="text-2xl font-bold text-red-600">{hardCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -99,16 +108,16 @@ const StatsPanel = () => {
           </CardContent>
         </Card>
 
-        {/* Creation Method Chart */}
+        {/* Difficulty Distribution Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Creation Method</CardTitle>
+            <CardTitle>Difficulty Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={creationMethodData}
+                  data={difficultyData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -117,7 +126,7 @@ const StatsPanel = () => {
                   fill="#8884d8"
                   dataKey="count"
                 >
-                  {creationMethodData.map((entry, index) => (
+                  {difficultyData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -177,16 +186,24 @@ const StatsPanel = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Regular Questions
+              Regular Questions by Difficulty
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>Total:</span>
-                <span className="font-semibold">{totalRegular}</span>
+                <span className="text-green-600">Easy:</span>
+                <span className="font-semibold">{regularEasyCount}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-yellow-600">Medium:</span>
+                <span className="font-semibold">{regularMediumCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-red-600">Hard:</span>
+                <span className="font-semibold">{regularHardCount}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t">
                 <span>Selected for Export:</span>
                 <span className="font-semibold">
                   {regularQuestions.filter(q => q.selected).length}
