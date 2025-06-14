@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { QuestionsProvider, useQuestions } from '@/context/QuestionsContext';
 import Header from '@/components/Header';
@@ -8,6 +7,7 @@ import RegularQuestionForm from '@/components/RegularQuestionForm';
 import RegularQuestionList from '@/components/RegularQuestionList';
 import ImportPanel from '@/components/ImportPanel';
 import ExportPanel from '@/components/ExportPanel';
+import StatsPanel from '@/components/StatsPanel';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -59,6 +59,9 @@ const IndexContent = () => {
           {/* Empty TabsContent - actual content is rendered below */}
         </TabsContent>
         <TabsContent value="regular" className="absolute left-0 right-0 top-14 bg-background min-h-0">
+          {/* Empty TabsContent - actual content is rendered below */}
+        </TabsContent>
+        <TabsContent value="stats" className="absolute left-0 right-0 top-14 bg-background min-h-0">
           {/* Empty TabsContent - actual content is rendered below */}
         </TabsContent>
         <TabsContent value="import" className="absolute left-0 right-0 top-14 bg-background min-h-0">
@@ -129,6 +132,25 @@ const IndexContent = () => {
               <p className="text-sm text-muted-foreground mt-1">
                 Regular questions have one correct answer out of four options.
                 You can select multiple regular questions for the exported quiz.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {activeTab === 'stats' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Statistics</h2>
+            </div>
+            
+            <StatsPanel />
+            
+            <div className="mt-4 p-4 bg-muted rounded-md">
+              <h3 className="font-medium">About Statistics</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                This section shows comprehensive statistics about your questions including counts by type, 
+                categories, and creation method. The "+" symbol indicates manually created questions, 
+                while imported questions are tracked separately.
               </p>
             </div>
           </div>

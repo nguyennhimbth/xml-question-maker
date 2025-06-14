@@ -21,6 +21,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, children }) => 
           <TabsList>
             <TabsTrigger value="fastest">Fastest Finger</TabsTrigger>
             <TabsTrigger value="regular">Regular Questions</TabsTrigger>
+            <TabsTrigger value="stats">Statistics</TabsTrigger>
             <TabsTrigger value="import">Import</TabsTrigger>
             <TabsTrigger value="export">Export</TabsTrigger>
           </TabsList>
