@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 interface RegularQuestionFormProps {
@@ -28,7 +29,8 @@ const RegularQuestionForm: React.FC<RegularQuestionFormProps> = ({ editQuestion,
       c: { text: '', correct: false },
       d: { text: '', correct: false }
     },
-    selected: false
+    selected: false,
+    difficulty: 1
   });
 
   const [correctAnswer, setCorrectAnswer] = useState<'a' | 'b' | 'c' | 'd'>(
@@ -69,6 +71,13 @@ const RegularQuestionForm: React.FC<RegularQuestionFormProps> = ({ editQuestion,
     setQuestion(prev => ({
       ...prev,
       answers: updatedAnswers
+    }));
+  };
+
+  const handleDifficultyChange = (value: string) => {
+    setQuestion(prev => ({
+      ...prev,
+      difficulty: parseInt(value) as 1 | 2 | 3
     }));
   };
 
@@ -188,6 +197,23 @@ const RegularQuestionForm: React.FC<RegularQuestionFormProps> = ({ editQuestion,
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="space-y-2 max-w-xs">
+            <Label htmlFor="difficulty">Difficulty Level</Label>
+            <Select 
+              value={question.difficulty?.toString() || "1"} 
+              onValueChange={handleDifficultyChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Easy</SelectItem>
+                <SelectItem value="2">Medium</SelectItem>
+                <SelectItem value="3">Hard</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="flex justify-end space-x-2">

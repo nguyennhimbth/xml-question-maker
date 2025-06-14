@@ -71,8 +71,6 @@ const processNormalSheet = (worksheet: any): RegularQuestion[] => {
   return questions.filter((q): q is RegularQuestion => q !== null);
 };
 
-type FFQuestionWithRequiredDifficulty = Omit<FastestFingerQuestion, 'difficulty'> & { difficulty: number };
-
 const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
   const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
   
@@ -157,7 +155,7 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
     };
   });
   
-  return questions.filter((q): q is FFQuestionWithRequiredDifficulty => q !== null) as FastestFingerQuestion[];
+  return questions.filter((q): q is FastestFingerQuestion => q !== null);
 };
 
 export const importXLSX = async (file: File, setQuestions: (questions: {
