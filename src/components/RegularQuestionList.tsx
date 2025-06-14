@@ -1,20 +1,103 @@
-
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuestions } from '@/context/QuestionsContext';
 import { RegularQuestion } from '@/types/question';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash } from 'lucide-react';
+import DifficultyControls from './DifficultyControls';
+import { downloadXML } from '@/utils/xmlExport';
 
 interface RegularQuestionListProps {
   onEdit: (question: RegularQuestion) => void;
 }
 
 const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => {
-  const { regularQuestions, deleteRegularQuestion, toggleRegularQuestionSelection } = useQuestions();
+  const { 
+    regularQuestions, 
+    deleteRegularQuestion, 
+    toggleRegularQuestionSelection,
+    updateRegularQuestion
+  } = useQuestions();
+
+  const [sortBy, setSortBy] = useState<string>('default');
+
+  const getDifficultyLabel = (difficulty: 1 | 2 | 3) => {
+    switch (difficulty) {
+      case 1: return 'Easy';
+      case 2: return 'Medium';
+      case 3: return 'Hard';
+      default: return 'Easy';
+    }
+  };
+
+  const getDifficultyColor = (difficulty: 1 | 2 | 3) => {
+    switch (difficulty) {
+      case 1: return 'bg-green-100 text-green-800';
+      case 2: return 'bg-yellow-100 text-yellow-800';
+      case 3: return 'bg-red-100 text-red-800';
+      default: return 'bg-green-100 text-green-800';
+    }
+  };
+
+  const sortedQuestions = useMemo(() => {
+    let sorted = [...regularQuestions];
+    
+    switch (sortBy) {
+      case 'difficulty-asc':
+        sorted.sort((a, b) => a.difficulty - b.difficulty);
+        break;
+      case 'difficulty-desc':
+        sorted.sort((a, b) => b.difficulty - a.difficulty);
+        break;
+      default:
+        // Keep original order
+        break;
+    }
+    
+    return sorted;
+  }, [regularQuestions, sortBy]);
+
+  const selectedCount = regularQuestions.filter(q => q.selected).length;
+
+  const handleSelectAll = () => {
+    regularQuestions.forEach(question => {
+      if (!question.selected) {
+        toggleRegularQuestionSelection(question.id);
+      }
+    });
+  };
+
+  const handleUnselectAll = () => {
+    regularQuestions.forEach(question => {
+      if (question.selected) {
+        toggleRegularQuestionSelection(question.id);
+      }
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    const selectedQuestions = regularQuestions.filter(q => q.selected);
+    selectedQuestions.forEach(question => {
+      deleteRegularQuestion(question.id);
+    });
+  };
+
+  const handleExportSelected = () => {
+    const selectedQuestions = regularQuestions.filter(q => q.selected);
+    if (selectedQuestions.length > 0) {
+      downloadXML(null, selectedQuestions);
+    }
+  };
+
+  const handleDifficultyChange = (questionId: string, difficulty: string) => {
+    updateRegularQuestion(questionId, { 
+      difficulty: parseInt(difficulty) as 1 | 2 | 3 
+    });
+  };
 
   if (regularQuestions.length === 0) {
     return (
@@ -31,21 +114,30 @@ const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => 
       <CardHeader>
         <CardTitle>Regular Questions</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <DifficultyControls
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          selectedCount={selectedCount}
+          totalCount={regularQuestions.length}
+          onSelectAll={handleSelectAll}
+          onUnselectAll={handleUnselectAll}
+          onDeleteSelected={handleDeleteSelected}
+          onExportSelected={handleExportSelected}
+        />
+        
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-10">Select</TableHead>
               <TableHead>Question</TableHead>
               <TableHead>Answers</TableHead>
+              <TableHead className="w-24">Difficulty</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {regularQuestions.map((question) => {
-              const correctAnswer = Object.entries(question.answers)
-                .find(([_, answer]) => answer.correct)?.[0]?.toUpperCase() || '';
-              
+            {sortedQuestions.map((question) => {
               return (
                 <TableRow key={question.id}>
                   <TableCell>
@@ -69,6 +161,25 @@ const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => 
                         </div>
                       ))}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Select 
+                      value={question.difficulty.toString()} 
+                      onValueChange={(value) => handleDifficultyChange(question.id, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue>
+                          <Badge className={getDifficultyColor(question.difficulty)}>
+                            {getDifficultyLabel(question.difficulty)}
+                          </Badge>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Easy</SelectItem>
+                        <SelectItem value="2">Medium</SelectItem>
+                        <SelectItem value="3">Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
