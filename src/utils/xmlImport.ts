@@ -44,12 +44,12 @@ const parseXML = (xmlString: string): {
     const four = fastestNode.querySelector('correctOrder four')?.textContent?.toLowerCase().trim() as 'a' | 'b' | 'c' | 'd' || 'd';
     const difficultyStr = fastestNode.getAttribute('difficulty');
     
-    // Parse difficulty with validation
+    // Parse difficulty, validate it's 1, 2, or 3, default to 1 (Easy)
     let difficulty: 1 | 2 | 3 = 1;
     if (difficultyStr) {
-      const diffNum = parseInt(difficultyStr);
-      if (diffNum >= 1 && diffNum <= 3) {
-        difficulty = diffNum as 1 | 2 | 3;
+      const parsedDifficulty = parseInt(difficultyStr);
+      if ([1, 2, 3].includes(parsedDifficulty)) {
+        difficulty = parsedDifficulty as 1 | 2 | 3;
       }
     }
 
@@ -79,16 +79,6 @@ const parseXML = (xmlString: string): {
   limitedNodes.forEach((node) => {
     const text = sanitizeText(node.querySelector('text')?.textContent?.trim() || '');
     const category = sanitizeText(node.querySelector('category')?.textContent?.trim() || 'Imported');
-    const difficultyStr = node.getAttribute('difficulty');
-    
-    // Parse difficulty with validation
-    let difficulty: 1 | 2 | 3 = 1;
-    if (difficultyStr) {
-      const diffNum = parseInt(difficultyStr);
-      if (diffNum >= 1 && diffNum <= 3) {
-        difficulty = diffNum as 1 | 2 | 3;
-      }
-    }
     
     if (text) {
       const a = node.querySelector('a');
@@ -98,6 +88,16 @@ const parseXML = (xmlString: string): {
 
       // Validate that all options exist
       if (a && b && c && d) {
+        // Parse difficulty from XML attribute, default to 1 (Easy)
+        const difficultyStr = node.getAttribute('difficulty');
+        let difficulty: 1 | 2 | 3 = 1;
+        if (difficultyStr) {
+          const parsedDifficulty = parseInt(difficultyStr);
+          if ([1, 2, 3].includes(parsedDifficulty)) {
+            difficulty = parsedDifficulty as 1 | 2 | 3;
+          }
+        }
+
         regularQuestions.push({
           id: uuidv4(),
           category,

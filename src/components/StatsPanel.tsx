@@ -20,7 +20,7 @@ const StatsPanel = () => {
     count: regularQuestions.filter(q => q.category === category).length
   }));
 
-  // Calculate difficulty distribution
+  // Calculate difficulty stats for all questions
   const allQuestions = [...fastestFingerQuestions, ...regularQuestions];
   const easyCount = allQuestions.filter(q => q.difficulty === 1).length;
   const mediumCount = allQuestions.filter(q => q.difficulty === 2).length;
@@ -33,10 +33,15 @@ const StatsPanel = () => {
   ];
 
   const difficultyData = [
-    { name: 'Easy', count: easyCount, color: '#10b981' },
-    { name: 'Medium', count: mediumCount, color: '#f59e0b' },
+    { name: 'Easy', count: easyCount, color: '#22c55e' },
+    { name: 'Medium', count: mediumCount, color: '#eab308' },
     { name: 'Hard', count: hardCount, color: '#ef4444' }
   ];
+
+  // Calculate difficulty breakdown for regular questions only
+  const regularEasyCount = regularQuestions.filter(q => q.difficulty === 1).length;
+  const regularMediumCount = regularQuestions.filter(q => q.difficulty === 2).length;
+  const regularHardCount = regularQuestions.filter(q => q.difficulty === 3).length;
 
   return (
     <div className="space-y-6">
@@ -173,20 +178,6 @@ const StatsPanel = () => {
                   {fastestFingerQuestions.filter(q => q.selected).length}
                 </span>
               </div>
-              <div className="mt-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-green-600">Easy:</span>
-                  <span>{fastestFingerQuestions.filter(q => q.difficulty === 1).length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-yellow-600">Medium:</span>
-                  <span>{fastestFingerQuestions.filter(q => q.difficulty === 2).length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-red-600">Hard:</span>
-                  <span>{fastestFingerQuestions.filter(q => q.difficulty === 3).length}</span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -195,34 +186,28 @@ const StatsPanel = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Regular Questions
+              Regular Questions by Difficulty
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>Total:</span>
-                <span className="font-semibold">{totalRegular}</span>
+                <span className="text-green-600">Easy:</span>
+                <span className="font-semibold">{regularEasyCount}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-yellow-600">Medium:</span>
+                <span className="font-semibold">{regularMediumCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-red-600">Hard:</span>
+                <span className="font-semibold">{regularHardCount}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t">
                 <span>Selected for Export:</span>
                 <span className="font-semibold">
                   {regularQuestions.filter(q => q.selected).length}
                 </span>
-              </div>
-              <div className="mt-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-green-600">Easy:</span>
-                  <span>{regularQuestions.filter(q => q.difficulty === 1).length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-yellow-600">Medium:</span>
-                  <span>{regularQuestions.filter(q => q.difficulty === 2).length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-red-600">Hard:</span>
-                  <span>{regularQuestions.filter(q => q.difficulty === 3).length}</span>
-                </div>
               </div>
             </div>
           </CardContent>

@@ -1,3 +1,4 @@
+
 import { utils, read } from 'xlsx';
 import { FastestFingerQuestion, RegularQuestion } from '@/types/question';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,7 +25,7 @@ const processNormalSheet = (worksheet: any): RegularQuestion[] => {
   const questions = limitedRows.map((row: any) => {
     if (!row || row.length < 7) return null; // Need at least 7 columns
     
-    const [_, question, optionA, optionB, optionC, optionD, answer, difficulty] = row;
+    const [_, question, optionA, optionB, optionC, optionD, answer, difficultyCol] = row;
     
     // Skip if essential data is missing
     if (!question || !optionA || !optionB || !optionC || !optionD || !answer) return null;
@@ -43,12 +44,12 @@ const processNormalSheet = (worksheet: any): RegularQuestion[] => {
     // Validate answer is one of the valid options
     if (!['a', 'b', 'c', 'd'].includes(normalizedAnswer)) return null;
     
-    // Parse difficulty (default to 1 if not provided or invalid)
-    let parsedDifficulty: 1 | 2 | 3 = 1;
-    if (difficulty) {
-      const diffNum = parseInt(sanitizeText(difficulty));
-      if (diffNum >= 1 && diffNum <= 3) {
-        parsedDifficulty = diffNum as 1 | 2 | 3;
+    // Parse difficulty column (8th column), default to 1 (Easy) if not provided or invalid
+    let difficulty: 1 | 2 | 3 = 1;
+    if (difficultyCol) {
+      const difficultyValue = parseInt(sanitizeText(difficultyCol));
+      if ([1, 2, 3].includes(difficultyValue)) {
+        difficulty = difficultyValue as 1 | 2 | 3;
       }
     }
     
@@ -63,12 +64,14 @@ const processNormalSheet = (worksheet: any): RegularQuestion[] => {
         d: { text: sanitizedD, correct: normalizedAnswer === 'd' }
       },
       selected: false,
-      difficulty: parsedDifficulty
+      difficulty
     };
   });
   
   return questions.filter((q): q is RegularQuestion => q !== null);
 };
+
+type FFQuestionWithRequiredDifficulty = Omit<FastestFingerQuestion, 'difficulty'> & { difficulty: number };
 
 const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
   const jsonData = utils.sheet_to_json(worksheet, { header: 1 });
@@ -83,7 +86,7 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
   const questions = limitedRows.map((row: any) => {
     if (!row || row.length < 7) return null; // Need at least 7 columns
     
-    const [_, question, optionA, optionB, optionC, optionD, correctOrder, difficulty] = row;
+    const [_, question, optionA, optionB, optionC, optionD, correctOrder, difficultyCol] = row;
     
     // Skip if essential data is missing
     if (!question || !optionA || !optionB || !optionC || !optionD || !correctOrder) return null;
@@ -125,12 +128,12 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
     // Ensure we have exactly 4 valid options and no duplicates
     if (orderArray.length !== 4 || new Set(orderArray).size !== 4) return null;
     
-    // Parse difficulty (default to 1 if not provided or invalid)
-    let parsedDifficulty: 1 | 2 | 3 = 1;
-    if (difficulty) {
-      const diffNum = parseInt(sanitizeText(difficulty));
-      if (diffNum >= 1 && diffNum <= 3) {
-        parsedDifficulty = diffNum as 1 | 2 | 3;
+    // Parse difficulty column (8th column), default to 1 (Easy) if not provided or invalid
+    let difficulty: 1 | 2 | 3 = 1;
+    if (difficultyCol) {
+      const difficultyValue = parseInt(sanitizeText(difficultyCol));
+      if ([1, 2, 3].includes(difficultyValue)) {
+        difficulty = difficultyValue as 1 | 2 | 3;
       }
     }
     
@@ -150,11 +153,11 @@ const processFFSheet = (worksheet: any): FastestFingerQuestion[] => {
         four: orderArray[3] as 'a' | 'b' | 'c' | 'd'
       },
       selected: false,
-      difficulty: parsedDifficulty
+      difficulty
     };
   });
   
-  return questions.filter((q): q is FastestFingerQuestion => q !== null);
+  return questions.filter((q): q is FFQuestionWithRequiredDifficulty => q !== null) as FastestFingerQuestion[];
 };
 
 export const importXLSX = async (file: File, setQuestions: (questions: {

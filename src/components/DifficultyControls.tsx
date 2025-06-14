@@ -1,102 +1,121 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckSquare, Square, Trash2, Download } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowUp, ArrowDown, CheckSquare, Square, Trash2 } from 'lucide-react';
 
 interface DifficultyControlsProps {
-  sortBy: string;
-  onSortChange: (value: string) => void;
+  sortOrder: 'asc' | 'desc' | null;
+  onSortChange: (order: 'asc' | 'desc' | null) => void;
   selectedCount: number;
   totalCount: number;
   onSelectAll: () => void;
   onUnselectAll: () => void;
   onDeleteSelected: () => void;
-  onExportSelected: () => void;
+  allSelected: boolean;
+  noneSelected: boolean;
 }
 
 const DifficultyControls: React.FC<DifficultyControlsProps> = ({
-  sortBy,
+  sortOrder,
   onSortChange,
   selectedCount,
   totalCount,
   onSelectAll,
   onUnselectAll,
   onDeleteSelected,
-  onExportSelected
+  allSelected,
+  noneSelected
 }) => {
-  const getDifficultyLabel = (value: string) => {
-    switch (value) {
-      case 'difficulty-asc': return 'Difficulty: Easy → Hard';
-      case 'difficulty-desc': return 'Difficulty: Hard → Easy';
-      case 'default': return 'Default Order';
-      default: return 'Sort by...';
+  const getDifficultyLabel = (difficulty: number) => {
+    switch (difficulty) {
+      case 1: return { label: 'Easy', color: 'bg-green-100 text-green-800' };
+      case 2: return { label: 'Medium', color: 'bg-yellow-100 text-yellow-800' };
+      case 3: return { label: 'Hard', color: 'bg-red-100 text-red-800' };
+      default: return { label: 'Unknown', color: 'bg-gray-100 text-gray-800' };
     }
   };
 
   return (
-    <div className="flex flex-wrap gap-2 items-center justify-between p-4 bg-muted/50 rounded-lg">
-      <div className="flex items-center gap-2">
-        <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Sort by...">
-              {getDifficultyLabel(sortBy)}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Default Order</SelectItem>
-            <SelectItem value="difficulty-asc">Difficulty: Easy → Hard</SelectItem>
-            <SelectItem value="difficulty-desc">Difficulty: Hard → Easy</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>Question Controls</span>
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline">{selectedCount} of {totalCount} selected</Badge>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-4 items-center">
+          {/* Sort by Difficulty */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">Sort by Difficulty:</span>
+            <Select value={sortOrder || 'none'} onValueChange={(value) => onSortChange(value === 'none' ? null : value as 'asc' | 'desc')}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select sort order" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No sorting</SelectItem>
+                <SelectItem value="asc">
+                  <div className="flex items-center">
+                    <ArrowUp className="h-4 w-4 mr-2" />
+                    Easy to Hard
+                  </div>
+                </SelectItem>
+                <SelectItem value="desc">
+                  <div className="flex items-center">
+                    <ArrowDown className="h-4 w-4 mr-2" />
+                    Hard to Easy
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">
-          {selectedCount} of {totalCount} selected
-        </span>
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onSelectAll}
-          disabled={selectedCount === totalCount}
-        >
-          <CheckSquare className="h-4 w-4 mr-1" />
-          Select All
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onUnselectAll}
-          disabled={selectedCount === 0}
-        >
-          <Square className="h-4 w-4 mr-1" />
-          Unselect All
-        </Button>
-        
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={onDeleteSelected}
-          disabled={selectedCount === 0}
-        >
-          <Trash2 className="h-4 w-4 mr-1" />
-          Delete Selected
-        </Button>
-        
-        <Button
-          variant="default"
-          size="sm"
-          onClick={onExportSelected}
-          disabled={selectedCount === 0}
-        >
-          <Download className="h-4 w-4 mr-1" />
-          Export Selected
-        </Button>
-      </div>
-    </div>
+          {/* Difficulty Legend */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">Difficulty:</span>
+            <Badge className={getDifficultyLabel(1).color}>Easy</Badge>
+            <Badge className={getDifficultyLabel(2).color}>Medium</Badge>
+            <Badge className={getDifficultyLabel(3).color}>Hard</Badge>
+          </div>
+
+          {/* Selection Controls */}
+          <div className="flex items-center space-x-2 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSelectAll}
+              disabled={allSelected}
+            >
+              <CheckSquare className="h-4 w-4 mr-1" />
+              Select All
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onUnselectAll}
+              disabled={noneSelected}
+            >
+              <Square className="h-4 w-4 mr-1" />
+              Unselect All
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onDeleteSelected}
+              disabled={selectedCount === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete Selected ({selectedCount})
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
