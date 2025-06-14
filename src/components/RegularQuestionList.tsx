@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash } from 'lucide-react';
-import DifficultyControls from './DifficultyControls';
+import DifficultyControls from '@/components/DifficultyControls';
 
 interface RegularQuestionListProps {
   onEdit: (question: RegularQuestion) => void;
@@ -23,10 +23,19 @@ const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => 
     updateRegularQuestion
   } = useQuestions();
 
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'none'>('none');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+
+  const getDifficultyLabel = (difficulty: number) => {
+    switch (difficulty) {
+      case 1: return { label: 'Easy', color: 'bg-green-100 text-green-800' };
+      case 2: return { label: 'Medium', color: 'bg-yellow-100 text-yellow-800' };
+      case 3: return { label: 'Hard', color: 'bg-red-100 text-red-800' };
+      default: return { label: 'Unknown', color: 'bg-gray-100 text-gray-800' };
+    }
+  };
 
   const sortedQuestions = useMemo(() => {
-    if (sortOrder === 'none') return regularQuestions;
+    if (!sortOrder) return regularQuestions;
     
     return [...regularQuestions].sort((a, b) => {
       if (sortOrder === 'asc') {
@@ -38,6 +47,8 @@ const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => 
   }, [regularQuestions, sortOrder]);
 
   const selectedCount = regularQuestions.filter(q => q.selected).length;
+  const allSelected = regularQuestions.length > 0 && selectedCount === regularQuestions.length;
+  const noneSelected = selectedCount === 0;
 
   const handleSelectAll = () => {
     regularQuestions.forEach(question => {
@@ -57,31 +68,15 @@ const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => 
 
   const handleDeleteSelected = () => {
     const selectedQuestions = regularQuestions.filter(q => q.selected);
-    selectedQuestions.forEach(question => {
-      deleteRegularQuestion(question.id);
-    });
-  };
-
-  const handleDifficultyChange = (questionId: string, difficulty: 1 | 2 | 3) => {
-    updateRegularQuestion(questionId, { difficulty });
-  };
-
-  const getDifficultyLabel = (level: 1 | 2 | 3) => {
-    switch (level) {
-      case 1: return 'Easy';
-      case 2: return 'Medium';
-      case 3: return 'Hard';
-      default: return 'Easy';
+    if (selectedQuestions.length > 0 && confirm(`Are you sure you want to delete ${selectedQuestions.length} question(s)?`)) {
+      selectedQuestions.forEach(question => {
+        deleteRegularQuestion(question.id);
+      });
     }
   };
 
-  const getDifficultyColor = (level: 1 | 2 | 3) => {
-    switch (level) {
-      case 1: return 'bg-green-100 text-green-800';
-      case 2: return 'bg-yellow-100 text-yellow-800';
-      case 3: return 'bg-red-100 text-red-800';
-      default: return 'bg-green-100 text-green-800';
-    }
+  const handleDifficultyChange = (questionId: string, difficulty: string) => {
+    updateRegularQuestion(questionId, { difficulty: parseInt(difficulty) as 1 | 2 | 3 });
   };
 
   if (regularQuestions.length === 0) {
@@ -99,13 +94,15 @@ const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => 
       <DifficultyControls
         sortOrder={sortOrder}
         onSortChange={setSortOrder}
+        selectedCount={selectedCount}
+        totalCount={regularQuestions.length}
         onSelectAll={handleSelectAll}
         onUnselectAll={handleUnselectAll}
         onDeleteSelected={handleDeleteSelected}
-        selectedCount={selectedCount}
-        totalCount={regularQuestions.length}
+        allSelected={allSelected}
+        noneSelected={noneSelected}
       />
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Regular Questions</CardTitle>
@@ -123,9 +120,7 @@ const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => 
             </TableHeader>
             <TableBody>
               {sortedQuestions.map((question) => {
-                const correctAnswer = Object.entries(question.answers)
-                  .find(([_, answer]) => answer.correct)?.[0]?.toUpperCase() || '';
-                
+                const difficultyInfo = getDifficultyLabel(question.difficulty);
                 return (
                   <TableRow key={question.id}>
                     <TableCell>
@@ -151,24 +146,29 @@ const RegularQuestionList: React.FC<RegularQuestionListProps> = ({ onEdit }) => 
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-2">
-                        <Badge className={getDifficultyColor(question.difficulty)}>
-                          {getDifficultyLabel(question.difficulty)}
-                        </Badge>
-                        <Select 
-                          value={question.difficulty.toString()} 
-                          onValueChange={(value) => handleDifficultyChange(question.id, parseInt(value) as 1 | 2 | 3)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">Easy</SelectItem>
-                            <SelectItem value="2">Medium</SelectItem>
-                            <SelectItem value="3">Hard</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <Select 
+                        value={question.difficulty.toString()} 
+                        onValueChange={(value) => handleDifficultyChange(question.id, value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue>
+                            <Badge className={difficultyInfo.color}>
+                              {difficultyInfo.label}
+                            </Badge>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">
+                            <Badge className="bg-green-100 text-green-800">Easy</Badge>
+                          </SelectItem>
+                          <SelectItem value="2">
+                            <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>
+                          </SelectItem>
+                          <SelectItem value="3">
+                            <Badge className="bg-red-100 text-red-800">Hard</Badge>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">

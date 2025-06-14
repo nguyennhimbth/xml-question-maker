@@ -13,10 +13,9 @@ import { Textarea } from '@/components/ui/textarea';
 interface FastestFingerFormProps {
   editQuestion?: FastestFingerQuestion;
   onComplete?: () => void;
-  onClose?: () => void;
 }
 
-const FastestFingerForm: React.FC<FastestFingerFormProps> = ({ editQuestion, onComplete, onClose }) => {
+const FastestFingerForm: React.FC<FastestFingerFormProps> = ({ editQuestion, onComplete }) => {
   const { addFastestFingerQuestion, updateFastestFingerQuestion } = useQuestions();
   
   const [question, setQuestion] = useState<FastestFingerQuestion>(editQuestion || {
@@ -25,7 +24,7 @@ const FastestFingerForm: React.FC<FastestFingerFormProps> = ({ editQuestion, onC
     answers: { a: '', b: '', c: '', d: '' },
     correctOrder: { one: 'a', two: 'b', three: 'c', four: 'd' },
     selected: false,
-    difficulty: 1
+    difficulty: 0
   });
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -47,10 +46,9 @@ const FastestFingerForm: React.FC<FastestFingerFormProps> = ({ editQuestion, onC
   };
 
   const handleDifficultyChange = (value: string) => {
-    const difficulty = parseInt(value) as 1 | 2 | 3;
     setQuestion(prev => ({
       ...prev,
-      difficulty: difficulty
+      difficulty: parseInt(value)
     }));
   };
 
@@ -65,9 +63,6 @@ const FastestFingerForm: React.FC<FastestFingerFormProps> = ({ editQuestion, onC
     
     if (onComplete) {
       onComplete();
-    }
-    if (onClose) {
-      onClose();
     }
   };
   
@@ -218,26 +213,26 @@ const FastestFingerForm: React.FC<FastestFingerFormProps> = ({ editQuestion, onC
           <div className="space-y-2 max-w-xs">
             <Label htmlFor="difficulty">Difficulty Level</Label>
             <Select 
-              value={question.difficulty?.toString() || "1"} 
+              value={question.difficulty?.toString() || "0"} 
               onValueChange={handleDifficultyChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select difficulty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">Easy</SelectItem>
-                <SelectItem value="2">Medium</SelectItem>
-                <SelectItem value="3">Hard</SelectItem>
+                <SelectItem value="0">Easy</SelectItem>
+                <SelectItem value="1">Medium</SelectItem>
+                <SelectItem value="2">Hard</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div className="flex justify-end space-x-2">
-            {(onComplete || onClose) && (
+            {onComplete && (
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={onComplete || onClose}
+                onClick={onComplete}
               >
                 Cancel
               </Button>
