@@ -43,15 +43,7 @@ const parseXML = (xmlString: string): {
     const three = fastestNode.querySelector('correctOrder three')?.textContent?.toLowerCase().trim() as 'a' | 'b' | 'c' | 'd' || 'c';
     const four = fastestNode.querySelector('correctOrder four')?.textContent?.toLowerCase().trim() as 'a' | 'b' | 'c' | 'd' || 'd';
     const difficultyStr = fastestNode.getAttribute('difficulty');
-    
-    // Parse difficulty, validate it's 1, 2, or 3, default to 1 (Easy)
-    let difficulty: 1 | 2 | 3 = 1;
-    if (difficultyStr) {
-      const parsedDifficulty = parseInt(difficultyStr);
-      if ([1, 2, 3].includes(parsedDifficulty)) {
-        difficulty = parsedDifficulty as 1 | 2 | 3;
-      }
-    }
+    const difficulty = difficultyStr ? Math.max(0, Math.min(10, Number(difficultyStr))) : 0; // Clamp between 0-10
 
     // Validate required fields
     if (text && a && b && c && d && ['a', 'b', 'c', 'd'].includes(one) && 
@@ -88,16 +80,6 @@ const parseXML = (xmlString: string): {
 
       // Validate that all options exist
       if (a && b && c && d) {
-        // Parse difficulty from XML attribute, default to 1 (Easy)
-        const difficultyStr = node.getAttribute('difficulty');
-        let difficulty: 1 | 2 | 3 = 1;
-        if (difficultyStr) {
-          const parsedDifficulty = parseInt(difficultyStr);
-          if ([1, 2, 3].includes(parsedDifficulty)) {
-            difficulty = parsedDifficulty as 1 | 2 | 3;
-          }
-        }
-
         regularQuestions.push({
           id: uuidv4(),
           category,
@@ -121,7 +103,6 @@ const parseXML = (xmlString: string): {
             },
           },
           selected: false,
-          difficulty
         });
       }
     }
