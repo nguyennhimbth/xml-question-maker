@@ -174,7 +174,7 @@ const IndexContent = () => {
                     <li>A sheet named "FASTEST FINGER FIRST" for the fastest finger questions</li>
                   </ul>
                   <p className="text-sm text-muted-foreground mt-2">
-                    The first two rows are considered headers and will be ignored.
+                    Data should start from the second row (first row can be headers).
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
                     <strong>Fastest Finger First Sheet Format:</strong> Id, Question, A, B, C, D, CORRECT ORDER<br />

@@ -24,6 +24,25 @@ const ImportPanel = () => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
+    
+    // Validate file type for security
+    if (file) {
+      const validTypes = importType === 'xml' 
+        ? ['text/xml', 'application/xml'] 
+        : ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+      
+      if (!validTypes.some(type => file.type === type || file.name.toLowerCase().endsWith(importType === 'xml' ? '.xml' : '.xlsx'))) {
+        toast.error(`Please select a valid ${importType.toUpperCase()} file`);
+        return;
+      }
+      
+      // Check file size (max 10MB for security)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File size must be less than 10MB');
+        return;
+      }
+    }
+    
     setSelectedFile(file);
   };
 
@@ -77,9 +96,24 @@ const ImportPanel = () => {
           </TabsList>
           
           <TabsContent value="xml" className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Import questions from an XML file following the specified format.
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Import questions from an XML file following the specified format.
+              </p>
+              
+              <div className="text-sm">
+                <h4 className="font-medium mb-2">XML Import Instructions:</h4>
+                <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                  <li>The XML file must be properly formatted and valid</li>
+                  <li>Use the exact structure shown in the example below</li>
+                  <li>For Fastest Finger questions, use the &lt;fastest&gt; tag with difficulty attribute</li>
+                  <li>For Regular questions, use the &lt;question&gt; tag</li>
+                  <li>Correct answers are marked with correct="yes" attribute</li>
+                  <li>Maximum file size: 10MB</li>
+                </ul>
+              </div>
+            </div>
+            
             <pre className="p-2 bg-muted rounded-md text-xs overflow-auto max-h-[200px]">
 {`<questions>
   <fastest difficulty="0">
@@ -98,10 +132,10 @@ const ImportPanel = () => {
   <question>
     <category>Your Category</category>
     <text>Your question text</text>
-    <a correct="yes/no">Option A</a>
-    <b correct="yes/no">Option B</b>
-    <c correct="yes/no">Option C</c>
-    <d correct="yes/no">Option D</d>
+    <a correct="yes">Option A</a>
+    <b correct="no">Option B</b>
+    <c correct="no">Option C</c>
+    <d correct="no">Option D</d>
   </question>
 </questions>`}
             </pre>
@@ -122,7 +156,10 @@ const ImportPanel = () => {
                 Columns: Id, Question, A, B, C, D, CORRECT ORDER (can be formatted as ABCD, A-B-C-D, 1234, or 1-2-3-4)
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                First two rows will be ignored (headers).
+                Data should start from the second row (first row can be headers).
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Maximum file size: 10MB
               </p>
             </div>
           </TabsContent>
@@ -160,6 +197,9 @@ const ImportPanel = () => {
             <div className="mt-4 p-3 bg-muted rounded-md flex items-center">
               <File className="h-4 w-4 mr-2" />
               <span className="text-sm truncate">{selectedFile.name}</span>
+              <span className="text-xs text-muted-foreground ml-2">
+                ({(selectedFile.size / 1024).toFixed(1)} KB)
+              </span>
             </div>
           )}
         </div>
