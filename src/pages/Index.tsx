@@ -174,21 +174,15 @@ const IndexContent = () => {
                     <li>A sheet named "FASTEST FINGER FIRST" for the fastest finger questions</li>
                   </ul>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Data starts from the second row (first row should be headers).
+                    Data should start from the second row (first row can be headers).
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    <strong>Fastest Finger First Sheet Format:</strong> Category, Question, A, B, C, D, CORRECT ORDER, DIFFICULTY<br />
-                    The CORRECT ORDER can be formatted as: ABCD, A-B-C-D, 1234, or 1-2-3-4<br />
-                    DIFFICULTY should be 1 (Easy), 2 (Medium), or 3 (Hard)
+                    <strong>Fastest Finger First Sheet Format:</strong> Id, Question, A, B, C, D, CORRECT ORDER<br />
+                    The CORRECT ORDER can be formatted as: ABCD, A-B-C-D, 1234, or 1-2-3-4
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    <strong>Normal Questions Sheet Format:</strong> Category, Question, A, B, C, D, ANSWER, DIFFICULTY<br />
-                    The ANSWER column should contain A, B, C, or D to indicate the correct answer.<br />
-                    DIFFICULTY should be 1 (Easy), 2 (Medium), or 3 (Hard)
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    <strong>XML Import:</strong> For XML files, you can manually set the difficulty using the difficulty controls after import.
-                    Add difficulty="1", difficulty="2", or difficulty="3" attributes to question elements.
+                    <strong>Normal Questions Sheet Format:</strong> Id, Question, A, B, C, D, ANSWER<br />
+                    The ANSWER column should contain A, B, C, or D to indicate the correct answer.
                   </p>
                 </div>
               </div>

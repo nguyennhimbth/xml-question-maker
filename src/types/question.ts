@@ -15,7 +15,7 @@ export interface FastestFingerQuestion {
     four: 'a' | 'b' | 'c' | 'd';
   };
   selected: boolean;
-  difficulty: 1 | 2 | 3; // 1 = Easy, 2 = Medium, 3 = Hard
+  difficulty?: number;
 }
 
 export interface RegularQuestion {
@@ -29,5 +29,4 @@ export interface RegularQuestion {
     d: { text: string; correct: boolean };
   };
   selected: boolean;
-  difficulty: 1 | 2 | 3; // 1 = Easy, 2 = Medium, 3 = Hard
 }

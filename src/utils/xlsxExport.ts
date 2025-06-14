@@ -18,13 +18,12 @@ export const downloadXLSX = (
       B: q.answers.b.text,
       C: q.answers.c.text,
       D: q.answers.d.text,
-      ANSWER: q.answers.a.correct ? 'A' : q.answers.b.correct ? 'B' : q.answers.c.correct ? 'C' : q.answers.d.correct ? 'D' : '',
-      DIFFICULTY: q.difficulty
+      ANSWER: q.answers.a.correct ? 'A' : q.answers.b.correct ? 'B' : q.answers.c.correct ? 'C' : q.answers.d.correct ? 'D' : ''
     };
   });
   
   // Add header rows for the Regular Questions worksheet
-  const regularHeader = ["Category", "Question", "A", "B", "C", "D", "ANSWER", "DIFFICULTY"];
+  const regularHeader = ["Category", "Question", "A", "B", "C", "D", "ANSWER"];
   const regularWorksheet: WorkSheet = utils.json_to_sheet([
     regularHeader.reduce((obj, key, index) => ({ ...obj, [key]: key }), {}),
     ...regularQuestionsData
@@ -52,12 +51,11 @@ export const downloadXLSX = (
       B: fastestFingerQuestion.answers.b,
       C: fastestFingerQuestion.answers.c,
       D: fastestFingerQuestion.answers.d,
-      "CORRECT ORDER": correctOrderString,
-      DIFFICULTY: fastestFingerQuestion.difficulty
+      "CORRECT ORDER": correctOrderString
     }];
     
     // Add header rows for the Fastest Finger worksheet
-    const fastestHeader = ["Category", "Question", "A", "B", "C", "D", "CORRECT ORDER", "DIFFICULTY"];
+    const fastestHeader = ["Category", "Question", "A", "B", "C", "D", "CORRECT ORDER"];
     const fastestWorksheet: WorkSheet = utils.json_to_sheet([
       fastestHeader.reduce((obj, key, index) => ({ ...obj, [key]: key }), {}),
       ...fastestData
